@@ -1,0 +1,493 @@
+---
+title: 商品
+date: 2026-08-23 10:48:11
+categories: Shopping-Cart
+top_img: https://github.com/CHI-KEKE/pics/blob/main/Codesss/Arch/ecom/Shopping-Cart/salepage-landing.png?raw=true
+cover : https://github.com/CHI-KEKE/pics/blob/main/Codesss/Arch/ecom/Shopping-Cart/salepage-landing.png?raw=true
+tags:
+toc:
+toc_number:
+comments :
+---
+
+
+{% tabs 商品 %}
+
+
+<!-- tab 三層關係-->
+
+
+<style>
+.hl-hero{position:relative;overflow:hidden;border-radius:18px;padding:36px 40px;margin:0 0 30px;background:linear-gradient(160deg,#f4f2ec 0%,#eae8dc 65%,#e3dfcd 100%);border:1.5px solid #d7cfba;}
+.hl-hero::after{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#c9403c,#8f1c1a);opacity:.16;}
+.hl-hero .hh-tag{display:inline-block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;background:#0e3746;color:#f4f2ec;padding:5px 16px;border-radius:3px;margin-bottom:14px;font-weight:700;}
+.hl-hero .hh-title{margin:0 0 10px;font-size:1.4rem;font-weight:800;color:#182228;}
+.hl-hero .hh-desc{max-width:82%;font-size:.92rem;line-height:1.85;color:#3d4d52;position:relative;}
+.hl-hero .hh-desc code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-weight:700;}
+.hl-hero .hh-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+.hl-hero .hh-badge{background:#f4f2ec;border:1.5px solid #b9c3c6;padding:6px 14px;border-radius:3px;font-size:.78rem;font-weight:600;color:#233238;box-shadow:0 6px 14px -8px rgba(14,55,70,.3);}
+.hl-card-grid{display:flex;flex-wrap:wrap;gap:16px;margin:16px 0 26px;}
+.hl-card-grid .hc-card{flex:1 1 220px;background:#f4f2ec;border:1.5px solid #d7cfba;border-radius:14px;padding:20px 20px 22px;box-shadow:0 8px 20px -8px rgba(14,55,70,.22);border-top:4px solid #0e3746;}
+.hl-card-grid .hc-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:6px;background:#0e3746;color:#f4f2ec;font-weight:800;font-size:.85rem;margin-bottom:10px;}
+.hl-card-grid .hc-card.red{border-top-color:#be2623;}
+.hl-card-grid .hc-card.red .hc-badge{background:#be2623;color:#fff;}
+.hl-card-grid .hc-card.tan{border-top-color:#a9946a;}
+.hl-card-grid .hc-card.tan .hc-badge{background:#a9946a;color:#fff;}
+.hl-card-grid .hc-title{font-weight:800;font-size:.96rem;color:#182228;margin-bottom:6px;}
+.hl-card-grid .hc-desc{font-size:.85rem;line-height:1.75;color:#3d4d52;}
+.hl-card-grid .hc-desc code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-size:.85em;font-weight:600;}
+.hl-pill-flow{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:20px 0 26px;}
+.hl-pill-flow .hp-step{background:#f4f2ec;border:2px solid #0e3746;color:#0e3746;border-radius:4px;padding:10px 20px;font-size:.85rem;font-weight:700;box-shadow:0 6px 14px -8px rgba(14,55,70,.3);}
+.hl-pill-flow .hp-step.red{border-color:#be2623;color:#8f1c1a;}
+.hl-pill-flow .hp-step.tan{border-color:#a9946a;color:#6b5a37;}
+.hl-pill-flow .hp-step.muted{border-color:#b9c3c6;color:#48585d;background:#eceae1;}
+.hl-pill-flow .hp-arrow{color:#0e3746;font-size:1.15rem;font-weight:900;}
+.hl-callout{border-radius:8px;padding:16px 20px;margin:16px 0;display:flex;gap:12px;align-items:flex-start;border:1.5px solid transparent;border-left-width:5px;}
+.hl-callout .hc-icon{font-size:1.2rem;flex:none;}
+.hl-callout p{margin:0;font-size:.9rem;color:#233238;line-height:1.7;}
+.hl-callout p strong{color:#182228;}
+.hl-callout.success{background:#e3edea;border-color:#9db8b0;border-left-color:#0e3746;}
+.hl-callout.warn{background:#f3ecd8;border-color:#d9c48f;border-left-color:#a9946a;}
+.hl-callout.danger{background:#f8e2e0;border-color:#e29c98;border-left-color:#be2623;}
+.hl-callout.info{background:#e6edef;border-color:#a9bcc2;border-left-color:#37606b;}
+.hl-table{width:100%;border-collapse:collapse;margin:16px 0 26px;background:#f4f2ec;border:1.5px solid #d7cfba;border-radius:10px;overflow:hidden;box-shadow:0 8px 20px -8px rgba(14,55,70,.2);}
+.hl-table th{background:#0e3746;color:#f4f2ec;font-size:.8rem;text-align:left;padding:12px 16px;border-bottom:1.5px solid #d7cfba;font-weight:700;}
+.hl-table td{padding:12px 16px;font-size:.85rem;color:#3d4d52;border-bottom:1px solid #e3ddc9;line-height:1.6;}
+.hl-table tr:last-child td{border-bottom:none;}
+.hl-table code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-size:.88em;font-weight:600;}
+.hl-layer-flow{display:flex;flex-direction:column;gap:10px;margin:20px 0 30px;}
+.hl-layer-flow .ml-row{display:flex;align-items:stretch;gap:14px;}
+.hl-layer-flow .ml-badge{flex:none;width:40px;height:40px;border-radius:6px;background:#e3ddc9;color:#0e3746;font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px -8px rgba(14,55,70,.35);}
+.hl-layer-flow .ml-row.core .ml-badge{background:#be2623;color:#fff;}
+.hl-layer-flow .ml-body{flex:1;background:#f4f2ec;border:1.5px solid #d7cfba;border-radius:10px;padding:12px 18px;box-shadow:0 6px 16px -10px rgba(14,55,70,.2);}
+.hl-layer-flow .ml-title{font-weight:800;font-size:.9rem;color:#182228;margin-bottom:2px;}
+.hl-layer-flow .ml-title code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-size:.85em;font-weight:600;}
+.hl-layer-flow .ml-desc{font-size:.8rem;color:#3d4d52;line-height:1.6;}
+.hl-layer-flow .ml-io-badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle;}
+.hl-layer-flow .ml-io-badge.io{background:#f8e2e0;color:#8f1c1a;}
+.hl-layer-flow .ml-io-badge.cpu{background:#e6edef;color:#274952;}
+.hl-layer-flow .ml-connector{width:40px;display:flex;justify-content:center;}
+.hl-layer-flow .ml-connector .ml-line{width:3px;flex:none;background:#0e3746;opacity:.35;height:20px;margin:0 auto;}
+.hl-erd{margin:22px 0 30px;padding:26px 24px;background:#f4f2ec;border:1.5px solid #d7cfba;border-radius:14px;box-shadow:0 10px 28px -12px rgba(14,55,70,.28);overflow-x:auto;}
+.hl-erd .erd-main{display:flex;align-items:center;gap:0;min-width:820px;}
+.hl-erd .erd-node{flex:none;border-radius:8px;padding:12px 14px;text-align:center;font-weight:800;font-size:.82rem;box-shadow:0 6px 14px -8px rgba(14,55,70,.3);min-width:110px;}
+.hl-erd .erd-node em{display:block;font-style:italic;font-weight:600;font-size:.7rem;margin-top:3px;opacity:.85;}
+.hl-erd .erd-node.gold{background:#f0c419;color:#0e3746;}
+.hl-erd .erd-node.lav{background:#dcd9f5;color:#2c2a4a;}
+.hl-erd .erd-edge{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 6px;min-width:46px;}
+.hl-erd .erd-edge .erd-line{width:100%;height:2px;background:#0e3746;opacity:.4;}
+.hl-erd .erd-edge .erd-card{font-size:.68rem;font-weight:800;color:#8a7a52;background:#f3ecd8;border:1px solid #d9c48f;border-radius:10px;padding:1px 8px;margin-bottom:3px;}
+.hl-erd .erd-branch{display:flex;align-items:center;margin-left:150px;margin-top:14px;gap:0;}
+.hl-erd .erd-branch-stack{display:flex;flex-direction:column;gap:10px;}
+.hl-steps{display:flex;flex-direction:column;gap:12px;margin:16px 0 22px;}
+.hl-steps .hs-card{background:#f4f2ec;border:1px solid #d7cfba;border-radius:8px;padding:14px 18px 14px 58px;position:relative;box-shadow:0 6px 16px -10px rgba(14,55,70,.2);}
+.hl-steps .hs-num{position:absolute;left:14px;top:14px;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#154a5c,#0e3746);color:#f4f2ec;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
+.hl-steps .hs-card.warn .hs-num{background:linear-gradient(135deg,#c9bc98,#a9946a);}
+.hl-steps .hs-title{font-weight:800;font-size:.9rem;color:#182228;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hl-steps .hs-desc{font-size:.84rem;color:#3d4d52;line-height:1.65;margin:0;}
+.hl-steps .hs-desc code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-size:.9em;font-weight:600;}
+.hl-swimlane{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:20px 0 30px;border:1.5px solid #d7cfba;border-radius:14px;overflow:hidden;box-shadow:0 10px 28px -12px rgba(14,55,70,.28);}
+.hl-swimlane .sl-head{background:#0e3746;color:#f4f2ec;text-align:center;font-weight:800;font-size:.82rem;padding:12px 8px;letter-spacing:.03em;}
+.hl-swimlane .sl-head.red{background:#be2623;}
+.hl-swimlane .sl-head.tan{background:#a9946a;}
+.hl-swimlane .sl-lane{border-right:1px dashed #d7cfba;padding:18px 12px;background:#f4f2ec;display:flex;flex-direction:column;align-items:center;gap:26px;position:relative;}
+.hl-swimlane .sl-lane:last-child{border-right:none;}
+.hl-swimlane .sl-node{position:relative;z-index:1;background:#fff;border:2px solid #0e3746;color:#0e3746;border-radius:6px;padding:8px 10px;font-size:.74rem;font-weight:700;text-align:center;box-shadow:0 4px 10px -6px rgba(14,55,70,.4);width:100%;}
+.hl-swimlane .sl-node.dim{opacity:.32;border-style:dashed;box-shadow:none;}
+.hl-swimlane .sl-step{position:relative;z-index:1;font-size:.68rem;color:#8a7a52;font-weight:700;background:#f3ecd8;border:1px solid #d9c48f;border-radius:20px;padding:3px 10px;}
+.hl-tabs{margin:18px 0 26px;}
+.hl-tabs .ht-bar{display:flex;gap:6px;border-bottom:2px solid #d7cfba;margin-bottom:0;}
+.hl-tabs .ht-btn{appearance:none;border:none;background:transparent;cursor:pointer;font-family:inherit;font-weight:700;font-size:.86rem;color:#48585d;padding:11px 20px;border-radius:8px 8px 0 0;position:relative;top:2px;}
+.hl-tabs .ht-btn.on{color:#0e3746;background:#f4f2ec;border:1.5px solid #d7cfba;border-bottom:2px solid #f4f2ec;}
+.hl-tabs .ht-panel{display:none;background:#f4f2ec;border:1.5px solid #d7cfba;border-top:none;border-radius:0 0 14px 14px;padding:20px 24px;box-shadow:0 10px 28px -12px rgba(14,55,70,.28);}
+.hl-tabs .ht-panel.on{display:block;}
+.hl-tabs .ht-panel ul{margin:0;padding-left:1.2em;}
+.hl-tabs .ht-panel li{font-size:.87rem;line-height:1.85;color:#3d4d52;}
+.hl-tabs .ht-panel code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-weight:600;}
+.hl-decision{display:flex;flex-direction:column;gap:0;margin:20px 0 26px;}
+.hl-decision .dc-gate{display:flex;align-items:stretch;gap:14px;margin-bottom:16px;}
+.hl-decision .dc-diamond{flex:none;width:132px;display:flex;align-items:center;justify-content:center;text-align:center;background:#0e3746;color:#f4f2ec;font-weight:800;font-size:.78rem;padding:14px 10px;border-radius:10px;position:relative;box-shadow:0 8px 18px -10px rgba(14,55,70,.4);}
+.hl-decision .dc-branches{flex:1;display:flex;flex-direction:column;gap:8px;}
+.hl-decision .dc-branch{display:flex;gap:10px;align-items:flex-start;background:#f4f2ec;border:1.5px solid #d7cfba;border-left:4px solid #a9946a;border-radius:8px;padding:10px 16px;}
+.hl-decision .dc-branch.yes{border-left-color:#be2623;background:#f8e2e0;}
+.hl-decision .dc-branch.no{border-left-color:#b9c3c6;background:#eceae1;opacity:.85;}
+.hl-decision .dc-tag{flex:none;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:20px;background:#0e3746;color:#f4f2ec;margin-top:1px;}
+.hl-decision .dc-branch.no .dc-tag{background:#8a949a;}
+.hl-decision .dc-text{font-size:.85rem;line-height:1.7;color:#3d4d52;}
+.hl-decision .dc-text code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-weight:600;}
+.hl-checklist{list-style:none;padding:0;margin:16px 0;}
+.hl-checklist li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed #d7cfba;color:#3d4d52;}
+.hl-checklist li:last-child{border-bottom:none;}
+.hl-checklist li::before{content:"✓";flex:none;width:20px;height:20px;border-radius:4px;background:#0e3746;color:#f4f2ec;font-size:.72rem;display:flex;align-items:center;justify-content:center;margin-top:2px;font-weight:900;}
+.hl-checklist li code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-weight:600;}
+details.ml-detail{margin-top:8px;background:#f4f2ec;border:1.5px solid #d7cfba;border-radius:10px;padding:12px 18px;}
+details.ml-detail summary{cursor:pointer;font-size:.86rem;font-weight:700;color:#37606b;list-style:none;user-select:none;}
+details.ml-detail summary::before{content:"▸ ";}
+details.ml-detail[open] summary::before{content:"▾ ";}
+details.ml-detail summary::-webkit-details-marker{display:none;}
+details.ml-detail p{font-size:.85rem;color:#3d4d52;line-height:1.7;margin:10px 0 0;}
+details.ml-detail p code{background:#e3ddc9;padding:1px 6px;border-radius:4px;color:#0e3746;font-weight:600;}
+</style>
+
+
+<div class="hl-hero">
+<div class="hh-tag">資料模型基礎</div>
+<div class="hh-title">SalePage／SaleProduct／SaleProductSKU：一頁、多商品、多規格的三層結構</div>
+<div class="hh-desc">加入購物車之所以要join三張表才能判斷一個SKU能不能加入，是因為商品資料本身就是分三層設計的：<code>SalePage</code>（商品頁）管頁面層級的銷售條件，<code>SaleProduct</code>（商品）管「這是主件還是贈品」的角色，<code>SaleProductSKU</code>（規格）管實際可購買、有獨立庫存與售價的最小單位。</div>
+</div>
+
+<div class="hl-erd">
+<div class="erd-main">
+<div class="erd-node lav">商品主分身類目<em>ShopCategorySalePage</em></div>
+<div class="erd-edge"><div class="erd-card">n:1</div><div class="erd-line"></div></div>
+<div class="erd-node gold">商品頁<em>SalePage</em></div>
+<div class="erd-edge"><div class="erd-card">1:n</div><div class="erd-line"></div></div>
+<div class="erd-branch-stack">
+<div class="erd-node lav">商品頁配送方式<em>SalePageDeliverType</em></div>
+<div class="erd-node lav">商品頁付款方式<em>SalePagePayType</em></div>
+</div>
+</div>
+<div class="erd-branch">
+<div class="erd-edge"><div class="erd-card">1:1</div><div class="erd-line"></div></div>
+<div class="erd-node gold">商品<em>SaleProduct</em></div>
+<div class="erd-edge"><div class="erd-card">1:n</div><div class="erd-line"></div></div>
+<div class="erd-node gold">商品頁SKU<em>SaleProductSKU</em></div>
+<div class="erd-edge"><div class="erd-card">1:1</div><div class="erd-line"></div></div>
+<div class="erd-node lav">庫存<em>ProductStock</em></div>
+</div>
+</div>
+
+<div class="hl-layer-flow">
+<div class="ml-row">
+<div class="ml-badge">頁</div>
+<div class="ml-body">
+<div class="ml-title"><code>SalePage</code> 商品頁<span class="ml-io-badge cpu">1 筆</span></div>
+<div class="ml-desc">掌管頁面層級的銷售條件：<code>ListingStartDateTime</code>／<code>ListingEndDateTime</code>（上下架時間）、<code>SellingStartDateTime</code>／<code>SellingEndDateTime</code>（銷售起訖日期）、<code>SellingStartTime</code>／<code>SellingEndTime</code>（每日銷售時段）、<code>IsClosed</code>（是否關閉）、<code>Modes</code>（顯示模式，例如是否為組合商品）、運費與付款方式設定。一個商品頁只有一筆。</div>
+</div>
+</div>
+<div class="ml-connector"><div class="ml-line"></div></div>
+<div class="ml-row">
+<div class="ml-badge">商品</div>
+<div class="ml-body">
+<div class="ml-title"><code>SaleProduct</code> 商品／角色<span class="ml-io-badge cpu">1 對 1</span></div>
+<div class="ml-desc"><code>SaleProduct</code> 與 <code>SalePage</code> 是<strong>一對一</strong>關係，一個 <code>SalePageId</code> 底下只會對應到一筆 <code>SaleProduct</code>。這一筆用 <code>IsMajor</code>（是否為主件）、<code>IsGift</code>（滿額贈贈品）、<code>IsSalePageGift</code>（買就送贈品）、<code>IsExtra</code>（加價購）等布林欄位標記這個商品頁對應商品的角色，也帶著 <code>IsExpress</code>（快閃商品）欄位。真正「同一頁掛多個商品」的情境（例如贈品），是靠 <code>SalePageGift</code> 這張獨立的買就送贈品主檔搭配另一個 <code>SalePage_Id</code> 來實現，而不是同一個 <code>SalePageId</code> 掛多筆 <code>SaleProduct</code>。</div>
+</div>
+</div>
+<div class="ml-connector"><div class="ml-line"></div></div>
+<div class="ml-row">
+<div class="ml-badge">規格</div>
+<div class="ml-body">
+<div class="ml-title"><code>SaleProductSKU</code> 規格／庫存單位<span class="ml-io-badge io">1 對多</span></div>
+<div class="ml-desc">同一個 <code>SaleProductId</code> 底下可以掛多筆 <code>SaleProductSKU</code>，每一筆是真正可被購買的最小單位，各自有獨立的 <code>Price</code>（售價）、<code>OuterId</code>（供應商料號）、<code>IsShow</code>（是否顯示），並關聯到 <code>ProductStock</code> 取得實際庫存量。加入購物車時傳入的 <code>SkuId</code> 鎖定的就是這一層。</div>
+</div>
+</div>
+</div>
+
+<table class="hl-table">
+<tr><th>層級</th><th>關聯鍵</th><th>這一層決定什麼</th></tr>
+<tr><td><code>SalePage</code></td><td><code>SalePage_Id</code></td><td>頁面能不能賣：上下架時間、銷售時段、運費付款方式設定、是否為組合商品</td></tr>
+<tr><td><code>SaleProduct</code></td><td><code>SaleProduct_SalePageId</code> → <code>SalePage_Id</code>（1:1）</td><td>這個商品頁對應商品的角色：主件、滿額贈贈品、買就送贈品、加價購</td></tr>
+<tr><td><code>SaleProductSKU</code></td><td><code>SaleProductSKU_SaleProductId</code> → <code>SaleProduct_Id</code>（1:n）</td><td>實際被購買的規格：售價、庫存、供應商料號、是否顯示</td></tr>
+</table>
+
+
+<div class="hl-callout info">
+<span class="hc-icon">🧩</span>
+<p><strong>實際舉例：</strong>主件與贈品是兩個各自獨立、卻靠 <code>SalePageGift</code> 綁在一起的商品頁，以下用小型關聯圖、卡片對照、SKU 對照表、加入購物車結果分支四個角度拆解同一個案例。</p>
+</div>
+
+<div class="hl-erd">
+<div class="erd-main">
+<div class="erd-node gold">主件商品頁<em>SalePage（Id=1001）</em></div>
+<div class="erd-edge"><div class="erd-card">1:1</div><div class="erd-line"></div></div>
+<div class="erd-node lav">SalePageGift<em>SalePageId=1001</em></div>
+<div class="erd-edge"><div class="erd-card">記錄</div><div class="erd-line"></div></div>
+<div class="erd-node gold">贈品商品頁<em>SalePage（Id=1002）</em></div>
+</div>
+</div>
+
+<div class="hl-card-grid">
+<div class="hc-card">
+<div class="hc-badge">主</div>
+<div class="hc-title">主件：Nike 運動鞋</div>
+<div class="hc-desc">商品頁 <code>SalePage_Id=1001</code>，對應唯一一筆 <code>SaleProduct</code>（<code>IsMajor=true</code>，<code>SaleProduct_Id=5001</code>），底下掛兩筆 <code>SaleProductSKU</code>：黑色 42 號與白色 40 號。</div>
+</div>
+<div class="hc-card tan">
+<div class="hc-badge">贈</div>
+<div class="hc-title">贈品：運動襪</div>
+<div class="hc-desc">另一個獨立商品頁 <code>SalePage_Id=1002</code>，對應另一筆 <code>SaleProduct</code>（<code>IsGift=true</code>，<code>SaleProduct_Id=5002</code>），庫存與售價各自獨立管理，不掛在主件底下。</div>
+</div>
+</div>
+
+<table class="hl-table">
+<tr><th>SkuId</th><th>規格</th><th>庫存</th><th>來源商品頁</th></tr>
+<tr><td><code>9001</code></td><td>黑色 42 號</td><td>20 雙</td><td>主件 <code>SalePage_Id=1001</code></td></tr>
+<tr><td><code>9002</code></td><td>白色 40 號</td><td>0 雙</td><td>主件 <code>SalePage_Id=1001</code></td></tr>
+<tr><td>（贈品規格）</td><td>運動襪</td><td>各自獨立管理</td><td>贈品 <code>SalePage_Id=1002</code></td></tr>
+</table>
+
+<ul class="hl-checklist">
+<li>帶 <code>SkuId=9001</code> 加入購物車：庫存足夠，驗證全數通過，成功加入。</li>
+<li>帶 <code>SkuId=9002</code> 加入購物車：庫存為 0，在庫存驗證這一關被擋下。</li>
+<li>誤帶贈品商品頁（<code>SalePage_Id=1002</code>）底下任一 SkuId：在角色驗證直接被擋下，因為贈品只能透過自動預選機制進入購物車，不能走一般的加入購物車入口。</li>
+</ul>
+
+<details class="ml-detail">
+<summary>展開：SalePageGift 怎麼把兩者串起來</summary>
+<p>兩個商品頁透過 <code>SalePageGift</code> 記錄串起關聯：<code>SalePageGift_SalePageId=1001</code> 指向鞋子頁面，代表買鞋子送這個贈品。這筆記錄只負責標記「誰跟誰綁在一起送」，不會讓兩個商品頁共用同一份庫存或規格資料。</p>
+</details>
+
+<!-- endtab -->
+
+<!-- tab Listing與Selling時間欄位-->
+
+<div class="hl-hero">
+<div class="hh-tag">時間欄位設計</div>
+<div class="hh-title">為什麼會有 Listing 與 Selling 兩組時間欄位</div>
+</div>
+
+<div class="hl-decision">
+<div class="dc-gate">
+<div class="dc-diamond">Listing（上下架）<br>vs<br>Selling（銷售）</div>
+<div class="dc-branches">
+<div class="dc-branch yes"><span class="dc-tag">Listing</span><span class="dc-text"><strong><code>SalePage_ListingStartDateTime</code>／<code>SalePage_ListingEndDateTime</code>：</strong>控制商品頁在前台看不看得到，也就是是否出現在商品列表、搜尋結果、分類頁。這是給營運人員排程上下架用的可見性開關，跟能不能結帳無關。</span></div>
+<div class="dc-branch no"><span class="dc-tag">Selling</span><span class="dc-text"><strong><code>SalePage_SellingStartDateTime</code>／<code>SalePage_SellingEndDateTime</code>（加上每日 <code>SalePage_SellingStartTime</code>／<code>SalePage_SellingEndTime</code>）：</strong>控制商品能不能被下單，也就是是否可以加入購物車、送出訂單。這是給促銷檔期、限時搶購用的交易開關，跟頁面看不看得到無關。</span></div>
+</div>
+</div>
+</div>
+
+<table class="hl-table">
+<tr><th>判斷結果</th><th>條件公式</th></tr>
+<tr><td>看得到商品（上架中）</td><td><code>now &gt;= SalePage_ListingStartDateTime &amp;&amp; now &lt; SalePage_ListingEndDateTime</code></td></tr>
+<tr><td>買得到商品（開賣中）</td><td><code>now &gt;= SalePage_SellingStartDateTime &amp;&amp; now &lt; SalePage_SellingEndDateTime</code>（另外每日 <code>SalePage_SellingStartTime</code>／<code>SalePage_SellingEndTime</code> 還要疊加判斷當下時段）</td></tr>
+<tr><td>搶先曝光</td><td><code>SalePage_ListingStartDateTime == now</code>（上架起始時間點當下，商品剛好開始被看見）</td></tr>
+<tr><td>商品頁關閉（總開關）</td><td><code>SalePage_IsClosed == true</code>，一旦成立會直接蓋過上面所有判斷</td></tr>
+</table>
+
+<div class="hl-callout warn">
+<span class="hc-icon">⚠️</span>
+<p><strong>兩者可以不同步，這是刻意設計：</strong>常見情境是預告型商品頁，商品頁已經上架（<code>SalePage_ListingStartDateTime</code> 已過，看得到頁面、看得到介紹圖文），但銷售時間還沒到（<code>SalePage_SellingStartDateTime</code> 是未來時間），此時會回傳尚未開賣，頁面顯示即將開賣但無法加入購物車。反過來也可能發生：頁面已經下架（<code>SalePage_ListingEndDateTime</code> 已過，不再出現在列表或搜尋），但如果透過直接連結或收藏連到頁面，仍以 <code>Selling</code> 時間為準決定能不能加入購物車。</p>
+</div>
+
+<div class="hl-callout info">
+<span class="hc-icon">🧩</span>
+<p><strong>驗證順序：</strong>先檢查 <code>SalePage_IsClosed</code>，一旦為 <code>true</code> 直接判定此商品頁已關閉，不再往下比對任何時間欄位；接著才檢查 <code>SalePage_ListingStartDateTime</code> 與 <code>SalePage_SellingStartDateTime</code>／<code>SellingStartTime</code>／<code>SellingEndTime</code>，任一未到就回傳尚未開賣；最後檢查 <code>SalePage_SellingEndDateTime</code> 是否已過，過了就回傳過銷售時間。可加入購物車的判斷只吃 <code>Selling</code> 系列時間與 <code>IsClosed</code>，<code>Listing</code> 時間本身不直接卡加入購物車，只影響前台是否顯示這個商品頁。</p>
+</div>
+
+<!-- endtab -->
+
+<!-- tab SalePageGift-->
+
+<div class="hl-hero">
+<div class="hh-tag">贈品怎麼跟主件綁在一起</div>
+<div class="hh-title">SalePageGift：主件與贈品怎麼關聯</div>
+<div class="hh-desc">贈品不是掛在主件同一個 <code>SalePage</code> 底下的另一筆 <code>SaleProduct</code>，而是它自己完整的一套 <code>SalePage</code>／<code>SaleProduct</code>／<code>SaleProductSKU</code>，透過 <code>SalePageGift</code> 這張獨立主檔表做誰跟誰綁在一起送的邏輯關聯，庫存、售價、上下架時間全部各自獨立管理。</div>
+</div>
+
+<div class="hl-erd">
+<div class="erd-main">
+<div class="erd-node gold">主件商品頁<em>SalePage（Id=1001）</em></div>
+<div class="erd-edge"><div class="erd-card">1:1</div><div class="erd-line"></div></div>
+<div class="erd-node lav">買就送贈品主檔<em>SalePageGift</em></div>
+<div class="erd-edge"><div class="erd-card">記錄</div><div class="erd-line"></div></div>
+<div class="erd-node gold">贈品商品頁<em>SalePage（Id=1002）</em></div>
+</div>
+</div>
+
+<table class="hl-table">
+<tr><th>欄位</th><th>說明</th></tr>
+<tr><td><code>SalePageGift_Id</code></td><td>買就送贈品主檔序號（唯一鍵建在這個欄位上）</td></tr>
+<tr><td><code>SalePageGift_SalePageId</code></td><td>外鍵，指回<strong>主件</strong>商品頁的 <code>SalePage_Id</code></td></tr>
+<tr><td><code>SalePageGift_ValidFlag</code></td><td>是否生效</td></tr>
+</table>
+
+<div class="hl-callout warn">
+<span class="hc-icon">⚠️</span>
+<p><strong>關聯粒度：</strong><code>SalePageGift</code> 唯一索引建在 <code>SalePageGift_Id</code> 本身，不是建在 <code>SalePageGift_SalePageId</code> 上，代表資料表結構本身沒有強制一個主件商品頁只能有一筆買就送設定；實務上一個主件商品頁能否掛多筆買就送規則，要以商品維運後台的業務邏輯為準，不能只靠這張表的索引推論。</p>
+</div>
+
+<div class="hl-callout info">
+<span class="hc-icon">🧩</span>
+<p><strong>舉例：</strong>「Nike 運動鞋」主件商品頁 <code>SalePage_Id=1001</code>（對應 <code>SaleProduct_Id=5001</code>，<code>IsMajor=true</code>）與贈品「運動襪」商品頁 <code>SalePage_Id=1002</code>（對應 <code>SaleProduct_Id=5002</code>，<code>IsGift=true</code>）是兩個完全獨立、各自一對一對應 <code>SaleProduct</code> 的商品頁，也各自有自己的 <code>SaleProductSKU</code> 與庫存。<code>SalePageGift</code> 表裡會有一筆 <code>SalePageGift_SalePageId=1001</code> 的紀錄，代表 1001 這支主件商品頁有買就送活動；實際送哪一個贈品商品頁，則由更細的贈品明細層級進一步指定。</p>
+</div>
+
+<div class="hl-callout success">
+<span class="hc-icon">✅</span>
+<p><strong>小結：</strong><code>SalePageGift</code> 只回答這個主件商品頁有沒有買就送活動這個開關性問題，不是把贈品塞進主件的 <code>SaleProduct</code> 清單裡。贈品永遠是它自己獨立的商品頁、商品、規格，只是邏輯上被 <code>SalePageGift</code>（以及更細的贈品明細）標記成跟某個主件綁在一起送。加入購物車時如果誤帶到贈品商品頁的 SkuId，會在角色驗證直接被擋下，因為贈品只能透過自動預選機制進入購物車，不能走一般的加入購物車入口。</p>
+</div>
+
+<!-- endtab -->
+
+<!-- tab ProductStock庫存-->
+
+<div class="hl-hero">
+<div class="hh-tag">庫存資料模型</div>
+<div class="hh-title">ProductStock 與 SaleProductSKU：規格定義賣什麼，庫存定義還剩多少</div>
+<div class="hh-desc"><code>SaleProductSKU</code> 與 <code>ProductStock</code> 是<strong>一對一</strong>關係，跟 <code>SaleProduct</code>／<code>SaleProductSKU</code> 那種一對多不同。<code>SaleProductSKU</code> 負責這個規格怎麼賣（售價、料號、顯示狀態），<code>ProductStock</code> 負責這個規格還剩多少能賣（庫存數字本身），兩張表刻意拆開維護。</div>
+<div class="hh-badges">
+<span class="hh-badge">1 對 1 關聯</span>
+<span class="hh-badge">外鍵：ProductStock_SaleProductSKUId</span>
+<span class="hh-badge">唯一索引保證不會一對多</span>
+</div>
+</div>
+
+<div class="hl-tabs">
+<div class="ht-bar">
+<button class="ht-btn on" data-tab="ps-model">兩表分工</button>
+<button class="ht-btn" data-tab="ps-why">為什麼拆表</button>
+</div>
+<div class="ht-panel on" id="ps-model">
+<ul>
+<li><strong><code>SaleProductSKU</code>（規格主體）：</strong>售價 <code>Price</code>、供應商料號 <code>OuterId</code>、是否顯示 <code>IsShow</code>、單次限購量 <code>OnceQty</code>，這些是商品目錄概念，變動頻率低。</li>
+<li><strong><code>ProductStock</code>（庫存帳）：</strong>上架總量 <code>TotalQty</code>、累積訂單量 <code>RegQty</code>、取消量 <code>CancelQty</code>、目前可賣量 <code>SellingQty</code>，這些是庫存帳務概念，會隨每一筆下單或取消頻繁異動。</li>
+</ul>
+</div>
+<div class="ht-panel" id="ps-why">
+<ul>
+<li><strong>更新頻率差異巨大：</strong>庫存數字高頻寫入，規格資料低頻異動，分表避免互相鎖等待、拖慢彼此。</li>
+<li><strong>語意單一職責：</strong>商品目錄（規格）與庫存帳務（數量），本來就是兩個業務子領域。</li>
+<li><strong>可延伸性：</strong><code>ProductStock_GoodsStockId</code> 指向更底層貨品庫存池，多個 SKU 可能共用同一批貨的庫存，拆開才能讓庫存邏輯獨立演進。</li>
+</ul>
+</div>
+</div>
+
+<div class="hl-swimlane">
+<div class="sl-head">呼叫端</div>
+<div class="sl-head">Repository</div>
+<div class="sl-head red">DB：csp_GetProductStockList</div>
+<div class="sl-head tan">回傳結果</div>
+<div class="sl-lane"><div class="sl-node">驗證可售庫存</div></div>
+<div class="sl-lane"><div class="sl-node">1 秒記憶體快取</div><div class="sl-step">未命中 →</div></div>
+<div class="sl-lane"><div class="sl-node">2 JOIN 兩表 + 限購封頂運算</div></div>
+<div class="sl-lane"><div class="sl-node dim">－</div><div class="sl-node">3 SellingQty 供驗證使用</div></div>
+</div>
+
+<div class="hl-card-grid">
+<div class="hc-card">
+<div class="hc-badge">①</div>
+<div class="hc-title">JOIN 條件</div>
+<div class="hc-desc">以 <code>ProductStock_SaleProductSKUId = SaleProductSKU_Id</code> 一對一關聯，並限定兩表都要 <code>ValidFlag = 1</code>（有效）。</div>
+</div>
+<div class="hc-card tan">
+<div class="hc-badge">②</div>
+<div class="hc-title">可售量怎麼算</div>
+<div class="hc-desc"><code>IsShow = 0</code> 直接回傳 <code>0</code>；<code>IsShow = 1</code> 時取庫存量與單次限購量 <code>OnceQty</code> 兩者較小值，除非是定期購自動建單模式則不封頂。</div>
+</div>
+<div class="hc-card red">
+<div class="hc-badge">③</div>
+<div class="hc-title">最終怎麼用</div>
+<div class="hc-desc">驗證只看這個計算後的 <code>SellingQty &lt; 1</code> 就擋下，不是直接看原始庫存欄位。</div>
+</div>
+</div>
+
+<div class="hl-callout success">
+<span class="hc-icon">✅</span>
+<p><strong>小結：</strong>庫存資料在被拿來驗證之前，已經在資料庫層先做過顯示狀態與單次限購的運算，取到的 <code>SellingQty</code> 是這次可以買多少而非倉庫裡實際還有多少，兩者是不同層次的數字。</p>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 商品怎麼寫進購物車-->
+
+<div class="hl-hero">
+<div class="hh-tag">寫入流程</div>
+<div class="hh-title">商品怎麼寫進購物車：加入購物車 API 的四道驗證</div>
+<div class="hh-desc">加入購物車這支 API 收到請求後，會依序跑過四道驗證，全數通過才會真正把商品寫進 <code>ShoppingCart</code> 表。</div>
+</div>
+
+<div class="hl-steps">
+<div class="hs-card">
+<div class="hs-num">1</div>
+<div class="hs-title">驗證商品頁</div>
+<p class="hs-desc">檢查商品是否存在、是否為贈品、商品頁是否已停售。</p>
+</div>
+<div class="hs-card">
+<div class="hs-num">2</div>
+<div class="hs-title">驗證容量上限</div>
+<p class="hs-desc">檢查商店設定的商品種類上限與總數量上限。</p>
+</div>
+<div class="hs-card">
+<div class="hs-num">3</div>
+<div class="hs-title">驗證可售庫存</div>
+<p class="hs-desc">確認商品剩餘可售數量足夠這次加入的數量。</p>
+</div>
+<div class="hs-card">
+<div class="hs-num">4</div>
+<div class="hs-title">驗證組合商品</div>
+<p class="hs-desc">確認加購品或組合商品的子項設定正確。</p>
+</div>
+<div class="hs-card warn">
+<div class="hs-num">✓</div>
+<div class="hs-title">寫入 <code>ShoppingCart</code> 表</div>
+<p class="hs-desc">四道驗證全數通過後，組裝購物車項目清單（主商品與加購品或組合商品子項各帶擴充資訊，標記主件或子件與分組編號），真正寫進資料庫。若開啟數量累加設定，加入前會先查出現有同商品數量做累加，否則直接覆蓋成請求的數量。</p>
+</div>
+</div>
+
+<table class="hl-table">
+<tr><th>判斷情境</th><th>依據</th><th>結果</th></tr>
+<tr><td>同一 <code>SalePageId</code>／<code>SkuId</code> 已存在於 <code>ShoppingCart</code> 表</td><td>依商店代碼、會員或訪客識別、有效旗標篩選既有紀錄</td><td>走更新：覆蓋或累加既有數量</td></tr>
+<tr><td>尚未存在於 <code>ShoppingCart</code> 表</td><td>同上篩選條件查無紀錄</td><td>走新增：插入新的一筆</td></tr>
+<tr><td>兩種情況的識別鍵</td><td>登入會員用會員編號，未登入訪客用未登入識別碼</td><td>與後續讀取購物車時使用的識別鍵完全一致</td></tr>
+</table>
+
+<div class="hl-callout info">
+<span class="hc-icon">ℹ️</span>
+<p><strong>與讀取購物車的關係：</strong>加入購物車（寫入 <code>ShoppingCart</code> 表）與讀取購物車（讀取該表並試算金物流）是分工明確的兩支 API。每次點擊加入購物車都會即時寫入資料庫，之後任何時間點讀取購物車，都是拿同一組識別鍵去查詢當下資料庫裡實際存在的商品，而不是靠前端把商品清單傳過來。</p>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 組合商品Bundle-->
+
+<div class="hl-hero">
+<div class="hh-tag">規則層設計</div>
+<div class="hh-title">組合商品：不是一支商品，是一套規則</div>
+<div class="hh-desc">組合商品不會改變 <code>SalePage</code>／<code>SaleProduct</code>／<code>SaleProductSKU</code> 的資料結構，主商品與子商品都是各自真實存在、可獨立查詢的商品頁。組合商品只是在這些真實商品頁上疊加一層誰能跟誰綁、要買幾件、算多少錢的規則，這層規則由外部規則服務提供，加入購物車當下逐項核對。</div>
+</div>
+
+<div class="hl-tabs">
+<div class="ht-bar">
+<button class="ht-btn on" data-tab="bd-main">主商品 vs 子商品</button>
+<button class="ht-btn" data-tab="bd-block">Block 是什麼</button>
+</div>
+<div class="ht-panel on" id="bd-main">
+<p>一次加入購物車呼叫的外層 <code>SalePageId</code>／<code>SkuId</code> 就是主商品（組合套餐本身）的真實商品頁；子商品清單裡每一筆的 <code>SalePageId</code>／<code>SaleProductSKUId</code> 則是各個子商品各自真實的商品頁，兩者都不是虛擬編號。驗證通過後，購物車裡實際會產生主商品加上 N 個子商品共 N+1 筆項目，靠主商品的擴充資訊指向子商品建立父子關係，結帳只收主商品價格。</p>
+</div>
+<div class="ht-panel" id="bd-block">
+<p>Block（區塊）是組合規則裡一個可替換選擇的商品分類槽位，不是指某個特定商品。例如早餐超值組合可以有 Block A（主餐：漢堡或三明治擇一）、Block B（飲料：紅茶或奶茶擇一）。每個 Block 各自定義必買與限購件數，以及這格允許哪些商品頁或規格。子商品宣告自己屬於哪個 Block，加入購物車時再拿這個 Block 的規則去核對範圍與數量。</p>
+</div>
+</div>
+
+<div class="hl-swimlane">
+<div class="sl-head">前端</div>
+<div class="sl-head">購物車服務</div>
+<div class="sl-head red">組合規則服務</div>
+<div class="sl-head tan">寫入購物車</div>
+<div class="sl-lane"><div class="sl-node">傳入主商品 SalePageId/SkuId + 子商品清單</div></div>
+<div class="sl-lane"><div class="sl-node">判定組合模式</div><div class="sl-step">欄位檢查 →</div><div class="sl-node">驗證組合子項</div></div>
+<div class="sl-lane"><div class="sl-node">取得組合規則</div><div class="sl-step">回傳規則 →</div><div class="sl-node">逐項核對</div></div>
+<div class="sl-lane"><div class="sl-node">主商品 + N 個子商品各成一筆</div><div class="sl-step">父子關聯</div><div class="sl-node">排序後寫入</div></div>
+</div>
+
+<table class="hl-table">
+<thead><tr><th>角色</th><th>SalePageId</th><th>SkuId</th><th>商品名稱</th><th>售價</th></tr></thead>
+<tbody>
+<tr><td>主商品（組合套餐頁）</td><td>8001</td><td>90001</td><td>早餐超值組合</td><td>199</td></tr>
+<tr><td>Block A 子商品</td><td>3001</td><td>30011</td><td>牛肉漢堡</td><td>89（單買參考價）</td></tr>
+<tr><td>Block B 子商品</td><td>3002</td><td>30021</td><td>中杯奶茶</td><td>45（單買參考價）</td></tr>
+</tbody>
+</table>
+
+<div class="hl-callout info">
+<span class="hc-icon">ℹ️</span>
+<p><strong>驗證重點：</strong>子商品總數量需等於必買件數乘以購買組數，每個子商品需對得上某個 Block，該 Block 允許的範圍需包含這個子商品的商品頁（若限定規格清單還需包含規格編號），數量需落在該 Block 的必買與限購區間內，最後主商品價格需小於等於子商品原價總和，任一項不符即擋下。</p>
+</div>
+
+<div class="hl-callout success">
+<span class="hc-icon">✅</span>
+<p><strong>小結：</strong>組合商品是規則驅動的商品綁定，判斷依據不在購物車自己的資料庫，而是外部規則服務提供的規則。購物車只負責把前端傳入的子商品清單，拿去對規則逐項驗證與排序，資料庫裡看到的仍是主商品與子商品各自獨立的購物車列。</p>
+</div>
+
+<!-- endtab -->
+
+{% endtabs %}

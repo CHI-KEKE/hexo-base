@@ -1,0 +1,684 @@
+---
+title: Stripe-Paytype-Express
+date: 2026-07-13 10:07:00
+categories: Payment
+top_img: https://raw.githubusercontent.com/CHI-KEKE/Payment/refs/heads/master/pics/stripe/paytype-express.png
+cover : https://raw.githubusercontent.com/CHI-KEKE/Payment/refs/heads/master/pics/stripe/paytype-express.png
+toc:
+toc_number:
+comments :
+tags:
+---
+
+會員在結帳時勾選「記住這張卡」之後，下次結帳畫面上完全看不到卡號輸入框，直接就能一鍵扣款，這個「免輸入卡號」的體驗背後，mweb 前台跟 PaymentMiddleware（以下簡稱 PMW）之間到底怎麼互相配合，才能既讓使用者方便，又不會讓卡片資訊外流。整體會先看 PMW 端 Stripe 外掛怎麼判斷「這次要用哪一種方式扣款」，再往前台看這些關鍵欄位究竟是怎麼被組出來、又是怎麼存回資料庫的。
+
+
+
+{% tabs Stripe_paytypeExpress %}
+
+<!-- tab 🔀 情境判斷邏輯與三種付款情境-->
+
+<style>
+.pte-pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.74rem; font-weight: 700; }
+.pte-pill.ok { background: #e7f7ee; color: #1f8a52; }
+.pte-pill.warn { background: #fdf3dd; color: #b7791f; }
+.pte-pill.err { background: #fdecea; color: #c0392b; }
+
+.pte-note { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 14px 18px; margin: 16px 0; font-size: 0.9rem; border-left: 4px solid #a78bfa; background: #f3f0fd; color: #4a3f78; line-height: 1.8; }
+.pte-note b { color: #372f5c; }
+.pte-note code { background: #eeecff; color: #4a3fb0; padding: 1px 6px; border-radius: 4px; font-size: 0.85em; }
+.pte-note .pte-note-icon { flex-shrink: 0; font-size: 1.05rem; line-height: 1.8; }
+.pte-note.code { border-left-color: #38bdf8; background: #eaf6ff; color: #1c4e73; }
+.pte-note.code b { color: #0c3a57; }
+.pte-note.code code { background: #dcf0ff; color: #0e6fa8; }
+.pte-note.warn { border-left-color: #f5b042; background: #fdf3dd; color: #6b4a09; }
+.pte-note.warn b { color: #563a05; }
+.pte-note.warn code { background: #fbe4b8; color: #7a520a; }
+
+.pte-legend { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 20px; }
+.pte-legend .pte-lg-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid; }
+.pte-legend .pte-lg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.pte-legend .s1 { background: #e9fbf8; border-color: #3fd6c0; color: #147d6c; }
+.pte-legend .s1 .pte-lg-dot { background: linear-gradient(135deg,#3fd6c0,#8ff0d2); }
+.pte-legend .s2 { background: #fff9ec; border-color: #ffcf5c; color: #92650a; }
+.pte-legend .s2 .pte-lg-dot { background: linear-gradient(135deg,#ffcf5c,#ffe28a); }
+.pte-legend .s3 { background: #f8f2ff; border-color: #c084fc; color: #6b3fa8; }
+.pte-legend .s3 .pte-lg-dot { background: linear-gradient(135deg,#c084fc,#e9d5ff); }
+
+.pte-section-title { display: flex; align-items: center; gap: 10px; margin: 32px 0 14px; }
+.pte-section-title .pte-st-icon { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg,#6ee7ff,#a78bfa); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.pte-section-title h2 { margin: 0; font-size: 1.12rem; border: none; padding: 0; }
+
+.pte-decision { background: #171f30; border-radius: 14px; padding: 22px 24px; margin: 16px 0 22px; box-shadow: 0 6px 20px rgba(20,20,50,0.18); }
+.pte-decision .pte-q { background: #1d2740; border: 1px solid #2b3654; border-radius: 10px; padding: 13px 18px; font-size: 0.88rem; color: #e8ecf6; }
+.pte-decision .pte-q code { background: #0b0f1a; color: #6ee7ff; padding: 1px 6px; border-radius: 5px; }
+.pte-decision .pte-arrow { text-align: center; color: #93a1c2; font-size: 1.2rem; padding: 4px 0; }
+.pte-decision .pte-result { margin: 6px 0 14px 24px; padding: 10px 16px; border-radius: 10px; font-size: 0.86rem; font-weight: 700; }
+.pte-decision .pte-result.s1 { background: rgba(110,231,255,0.12); border: 1px solid rgba(110,231,255,0.4); color: #1f7fa8; }
+.pte-decision .pte-result.s2 { background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.45); color: #92650a; }
+.pte-decision .pte-result.s3 { background: rgba(167,139,250,0.14); border: 1px solid rgba(167,139,250,0.45); color: #5b3fa8; }
+
+.pte-scenario { border-radius: 16px; margin: 0 0 26px; overflow: hidden; border: 1px solid #2b3654; background: #171f30; box-shadow: 0 6px 20px rgba(20,20,50,0.16); }
+.pte-scenario .pte-head { padding: 18px 22px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #2b3654; flex-wrap: wrap; }
+.pte-scenario .pte-badge { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; color: #0b0f1a; flex-shrink: 0; }
+.pte-scenario.s1 .pte-badge { background: linear-gradient(135deg,#3fd6c0,#8ff0d2); }
+.pte-scenario.s2 .pte-badge { background: linear-gradient(135deg,#ffcf5c,#ffe28a); }
+.pte-scenario.s3 .pte-badge { background: linear-gradient(135deg,#c084fc,#e9d5ff); }
+.pte-scenario .pte-head h3 { margin: 0; font-size: 1.05rem; color: #e8ecf6; }
+.pte-scenario .pte-tag { margin-left: auto; font-size: 0.72rem; color: #93a1c2; background: rgba(255,255,255,0.04); border: 1px solid #2b3654; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+.pte-scenario .pte-body { padding: 20px 22px; }
+.pte-scenario .pte-body h4 { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 1px; color: #93a1c2; margin: 20px 0 10px; }
+.pte-scenario .pte-body h4:first-child { margin-top: 0; }
+
+.pte-trigger-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.pte-trigger-grid .pte-item { flex: 1; min-width: 190px; background: #0b0f1a; border: 1px solid #2b3654; border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; }
+.pte-trigger-grid .pte-item .pte-k { color: #6ee7ff; font-family: Consolas, monospace; }
+.pte-trigger-grid .pte-item .pte-v { color: #93a1c2; font-size: 0.78rem; margin-top: 2px; }
+
+.pte-pre { background: #0b0f1a; border: 1px solid #2b3654; border-radius: 10px; padding: 16px 18px; margin: 0 0 14px; overflow-x: auto; font-family: Consolas, monospace !important; font-size: 0.82rem !important; line-height: 1.75 !important; white-space: pre !important; color: #d5e2ff !important; text-shadow: none !important; }
+.pte-pre .m { color: #6ee7ff !important; }
+.pte-pre .s { color: #fbbf24 !important; }
+.pte-pre .n { color: #a78bfa !important; }
+.pte-pre .c { color: #6b7a9e !important; }
+
+.pte-table-wrap { display: inline-block; max-width: 100%; overflow-x: auto; margin: 6px 0 18px; border: 1px solid #2b3654; border-radius: 10px; }
+.pte-table-wrap table { width: auto; border-collapse: collapse; font-size: 0.86rem; margin: 0 !important; background: #171f30; color: #e8ecf6; }
+.pte-table-wrap thead th { background: #1d2740; color: #93a1c2; text-align: left; padding: 9px 14px; font-weight: 600; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.pte-table-wrap tbody td { padding: 9px 14px; border-top: 1px solid #2b3654; vertical-align: top; }
+.pte-table-wrap code { background: #0b0f1a; color: #6ee7ff; padding: 1px 6px; border-radius: 5px; font-size: 0.85em; }
+</style>
+
+PMW 收到 mweb 呼叫後，`StripePlugin.Pay()` 會依照這次請求帶的 `ExtendInfo` 內容依序判斷要走哪一種付款情境，命中即停，不會同時符合兩種。全文的卡片顏色都對應同一套語意，先認識這三個顏色，後面看圖表會更快上手：
+
+<div class="pte-legend">
+<div class="pte-lg-item s1"><span class="pte-lg-dot"></span>情境一・單純 Pay</div>
+<div class="pte-lg-item s2"><span class="pte-lg-dot"></span>情境二・首次綁卡</div>
+<div class="pte-lg-item s3"><span class="pte-lg-dot"></span>情境三・舊卡復用</div>
+</div>
+
+<div class="pte-decision">
+<div class="pte-q">ExtendInfo 是否同時有 <code>payment_method</code> AND <code>customer_id</code>？</div>
+<div class="pte-result s3">✔ 是 → 情境三：舊卡復用（ReusePaymentMethodPaymentIntentProcess）</div>
+<div class="pte-arrow">↓ 否，繼續判斷</div>
+<div class="pte-q">ExtendInfo.<code>is_reuse_payment_method</code> == <code>true</code>？</div>
+<div class="pte-result s2">✔ 是 → 情境二：首次綁卡（RememberPaymentMethodProcess）</div>
+<div class="pte-arrow">↓ 否</div>
+<div class="pte-q">以上皆非</div>
+<div class="pte-result s1">→ 情境一：單純 Pay（strategy.Pay()，明碼卡號直接扣款）</div>
+</div>
+
+<div class="pte-note code">
+<span class="pte-note-icon">📄</span>
+<span><b>對應程式碼：</b>StripePlugin.cs <code>Pay()</code> L112-124 — 先檢查 <code>PaymentMethod</code> 與 <code>CustomerId</code> 是否都非空 → 情境三；否則檢查 <code>IsReusePaymentMethod == true</code> → 情境二；都不符合則呼叫 <code>strategy.Pay(request)</code> → 情境一。行動錢包（Apple Pay / Google Pay）在最前面已被攔截，走獨立的 <code>ProcessMobileWalletPayment</code>，不在此三情境之列。</span>
+</div>
+
+## 💳 三種付款情境詳解
+
+<div class="pte-scenario s1">
+<div class="pte-head">
+<div class="pte-badge">01</div>
+<h3>情境一：單純 Pay（未綁卡 / 一般結帳）</h3>
+<span class="pte-tag">strategy.Pay()</span>
+</div>
+<div class="pte-body">
+<h4>觸發條件</h4>
+<div class="pte-trigger-grid">
+<div class="pte-item"><div class="pte-k">payment_method</div><div class="pte-v">空（未提供）</div></div>
+<div class="pte-item"><div class="pte-k">customer_id</div><div class="pte-v">空（未提供）</div></div>
+<div class="pte-item"><div class="pte-k">is_reuse_payment_method</div><div class="pte-v">false（預設）</div></div>
+</div>
+
+<h4>DirectCharge 流程（一般商店）</h4>
+<pre class="pte-pre">1. <span class="m">POST</span> /v1/payment_methods          <span class="c">← 明碼卡號，換取 pm_xxx</span>
+2. <span class="m">POST</span> /v1/payment_intents          <span class="c">← 帶 pm_xxx、金額、幣別、confirm=true</span>
+      confirmation_method=automatic
+      confirm=true
+      application_fee_amount=...</pre>
+
+<h4>DestinationCharge 流程（子帳號分潤商店，多一步）</h4>
+<pre class="pte-pre">1. <span class="m">POST</span> /v1/payment_methods          <span class="c">← 用主帳號，不帶 Stripe-Account Header</span>
+2. <span class="m">GET</span>  /v1/accounts/{sub_account}  <span class="c">← 取子帳號 statement_descriptor</span>
+3. <span class="m">POST</span> /v1/payment_intents          <span class="c">← transfer_data[destination]、on_behalf_of</span></pre>
+
+<h4>回應結果</h4>
+<div class="pte-table-wrap">
+<table>
+<tr><th>Stripe status</th><th>PMW ReturnCode</th><th>mweb 行為</th></tr>
+<tr><td><code>succeeded</code></td><td><span class="pte-pill ok">0000</span></td><td>付款成功，訂單繼續走完後續 Processor</td></tr>
+<tr><td><code>requires_action</code></td><td><span class="pte-pill warn">2003</span></td><td>回傳 3D 驗證 URL，訂單進入 WaitingTo3DAuth</td></tr>
+<tr><td>Stripe ApiException（卡被拒等）</td><td><span class="pte-pill err">3000</span></td><td>取消訂單，退還積點 / 券 / 購物金</td></tr>
+</table>
+</div>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span><b>StripePlugin.cs L121-123：</b>兩個 if 都不符合時，直接 <code>response = await strategy.Pay(request)</code>，由 <code>DirectChargePaymentFlowStrategy</code> 或 <code>DestinationChargePaymentFlowStrategy</code> 處理實際 API 呼叫。</span></div>
+</div>
+</div>
+
+<div class="pte-scenario s2">
+<div class="pte-head">
+<div class="pte-badge">02</div>
+<h3>情境二：首次綁卡（記住信用卡）</h3>
+<span class="pte-tag">RememberPaymentMethodProcess</span>
+</div>
+<div class="pte-body">
+<h4>觸發條件</h4>
+<div class="pte-trigger-grid">
+<div class="pte-item"><div class="pte-k">is_reuse_payment_method</div><div class="pte-v">true</div></div>
+<div class="pte-item"><div class="pte-k">payment_method</div><div class="pte-v">空（新卡，尚無 Token）</div></div>
+<div class="pte-item"><div class="pte-k">customer_id</div><div class="pte-v">空</div></div>
+</div>
+
+<h4>API 呼叫序列</h4>
+<pre class="pte-pre"><span class="n">// StripePlugin.ReusePaymentMethod() 先查詢 Customer</span>
+0. <span class="m">GET</span> /v1/customers/search?query=name:"{shop_id}_{member_id}"
+
+<span class="n">// RememberPaymentMethodProcess.Process()</span>
+1. <span class="m">POST</span> /v1/payment_methods          <span class="c">← 明碼卡號建立 PM</span>
+2. <span class="m">POST</span> /v1/payment_intents          <span class="c">← setup_future_usage=off_session（固定帶）</span>
+
+<span class="n">若 PaymentIntent.status 為 succeeded 或 requires_action：</span>
+   ├─ customers.data.Count == 1（已有 Customer）
+   │     3a. <span class="m">POST</span> /v1/payment_methods/{id}/attach   <span class="c">← 綁到既有 Customer</span>
+   └─ customers.data.Count == 0（尚無 Customer）
+         3b. <span class="m">POST</span> /v1/customers                <span class="c">← 建立並帶 payment_method 綁定</span>
+<span class="n">其他狀態（付款失敗）→ 不執行綁卡，直接回傳</span></pre>
+
+<h4>回應結果</h4>
+<div class="pte-table-wrap">
+<table>
+<tr><th>PaymentIntent status</th><th>綁卡動作</th><th>ReturnCode</th></tr>
+<tr><td><code>succeeded</code></td><td>attach 或 create customer</td><td><span class="pte-pill ok">0000</span></td></tr>
+<tr><td><code>requires_action</code></td><td>attach 或 create customer</td><td><span class="pte-pill warn">2003</span></td></tr>
+<tr><td>其他失敗狀態</td><td>不綁卡</td><td>依失敗結果回傳</td></tr>
+</table>
+</div>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span><b>RememberPaymentMethodProcess.cs L54-70：</b>只有 <code>status is "requires_action" or "succeeded"</code> 才會進入 <code>switch(context.CustomersSearch.data.Count)</code>；Count 為 1 走 <code>AttachMethod</code>，為 0 走 <code>CreateCustomer</code>，其餘（大於 1）視為異常僅記 log 不處理，確保「一會員一 Customer」的資料原則。</span></div>
+</div>
+</div>
+
+<div class="pte-scenario s3">
+<div class="pte-head">
+<div class="pte-badge">03</div>
+<h3>情境三：舊卡復用</h3>
+<span class="pte-tag">ReusePaymentMethodPaymentIntentProcess</span>
+</div>
+<div class="pte-body">
+<h4>觸發條件</h4>
+<div class="pte-trigger-grid">
+<div class="pte-item"><div class="pte-k">payment_method</div><div class="pte-v">必填（已綁定的 PM Token）</div></div>
+<div class="pte-item"><div class="pte-k">customer_id</div><div class="pte-v">必填（既有 Stripe Customer ID）</div></div>
+<div class="pte-item"><div class="pte-k">off_session</div><div class="pte-v">true = 靜默扣款，可能跳過 3D</div></div>
+</div>
+
+<h4>API 呼叫序列</h4>
+<pre class="pte-pre"><span class="n">// StripePlugin.ReusePaymentMethod() 先驗證 Customer</span>
+1. <span class="m">GET</span> /v1/customers/search?query=name:"{shop_id}_{member_id}"
+
+<span class="n">// ReusePaymentMethodPaymentIntentProcess.Process()</span>
+若 customer_id 存在於 search 結果中：
+   2. <span class="m">POST</span> /v1/payment_intents   <span class="c">← 直接帶已存的 payment_method Token</span>
+      customer={customer_id}
+      off_session=true                     <span class="c">← 有帶則嘗試跳過 3D</span>
+否則：
+   <span class="s">throw new NotSupportedException("Illegal Customer")</span>  <span class="c">← HTTP 500</span></pre>
+
+<h4>回應結果</h4>
+<div class="pte-table-wrap">
+<table>
+<tr><th>情況</th><th>行為</th><th>結果</th></tr>
+<tr><td><code>customer_id</code> 存在於 Search 結果</td><td>正常執行 PaymentIntent</td><td>依 status 走 <span class="pte-pill ok">0000</span> / <span class="pte-pill warn">2003</span></td></tr>
+<tr><td><code>customer_id</code> 不存在於 Search 結果</td><td>throw NotSupportedException</td><td><span class="pte-pill err">HTTP 500</span></td></tr>
+<tr><td>Stripe ApiException（Token 失效等）</td><td>捕捉例外</td><td><span class="pte-pill err">3000</span></td></tr>
+</table>
+</div>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span><b>ReusePaymentMethodPaymentIntentProcess.cs L19-28：</b>用 <code>context.CustomersSearch.data.Any(x => x.id == context.CustomerId)</code> 防止使用者竄改 <code>customer_id</code> 冒用他人已綁定的卡；驗證通過才呼叫 <code>Strategy.PaymentIntentAsync(request, null)</code>（不覆寫 setup_future_usage）。</span></div>
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 📊 情境比較與 Process 類別解析-->
+
+<style>
+.pte-proc-grid { display: flex; gap: 20px; flex-wrap: wrap; margin: 16px 0 22px; }
+.pte-proc-card { flex: 1; min-width: 300px; background: #1d2740; border: 1px solid #2b3654; border-radius: 14px; padding: 20px 22px; color: #e8ecf6; }
+.pte-proc-card .pte-proc-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.pte-proc-card .pte-proc-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.pte-proc-card.p2 .pte-proc-icon { background: linear-gradient(135deg,#ffcf5c,#ffe28a); }
+.pte-proc-card.p3 .pte-proc-icon { background: linear-gradient(135deg,#c084fc,#e9d5ff); }
+.pte-proc-card .pte-name { margin: 0; font-family: Consolas, monospace; font-size: 0.95rem; color: #e8ecf6; }
+.pte-proc-card .pte-role { font-size: 0.76rem; color: #93a1c2; margin-top: 2px; }
+.pte-proc-card p.pte-purpose { font-size: 0.86rem; color: #e8ecf6; margin: 0 0 14px; padding: 10px 14px; background: rgba(255,255,255,0.04); border-radius: 8px; border-left: 3px solid #6ee7ff; }
+.pte-proc-card ol.pte-steps { margin: 0; padding-left: 20px; font-size: 0.84rem; color: #b9c2dc; }
+.pte-proc-card ol.pte-steps li { margin-bottom: 8px; }
+.pte-proc-card ol.pte-steps li b { color: #e8ecf6; }
+.pte-proc-card ol.pte-steps li code { background: #0b0f1a; color: #6ee7ff; padding: 1px 6px; border-radius: 5px; font-size: 0.8em; }
+.pte-proc-card .pte-why { margin-top: 14px; font-size: 0.8rem; color: #93a1c2; border-top: 1px dashed #2b3654; padding-top: 12px; }
+.pte-proc-card .pte-why b { color: #fbbf24; }
+</style>
+
+三種情境的觸發依據、涉及的 Process 類別與 Stripe API 呼叫次數整理如下：
+
+<div class="pte-table-wrap">
+<table>
+<tr><th>情境</th><th>決定欄位</th><th>負責類別</th><th>DirectCharge API 數</th><th>DestinationCharge API 數</th></tr>
+<tr><td>① 單純 Pay</td><td>皆空</td><td><code>strategy.Pay()</code></td><td>2</td><td>3</td></tr>
+<tr><td>② 首次綁卡</td><td><code>is_reuse_payment_method=true</code></td><td><code>RememberPaymentMethodProcess</code></td><td>4</td><td>5</td></tr>
+<tr><td>③ 舊卡復用</td><td><code>payment_method</code> + <code>customer_id</code></td><td><code>ReusePaymentMethodPaymentIntentProcess</code></td><td>2</td><td>3</td></tr>
+</table>
+</div>
+
+情境二、情境三命中後，實際扣款與後續動作都委派給對應的 `IReusePaymentMethodProcess` 實作類別執行，以下說明兩者各自負責的職責與存在原因。
+
+<div class="pte-proc-grid">
+<div class="pte-proc-card p2">
+<div class="pte-proc-head">
+<div class="pte-proc-icon">💳</div>
+<div>
+<h4 class="pte-name">RememberPaymentMethodProcess</h4>
+<div class="pte-role">情境二・首次綁卡專用</div>
+</div>
+</div>
+<p class="pte-purpose">負責「用明碼卡號完成這一次付款，同時把這張卡的 Token 記到會員的 Stripe Customer 底下」，讓下次結帳可以直接用 Token 免輸入卡號（即情境三的前置準備）。</p>
+<ol class="pte-steps">
+<li><b>建立 PaymentMethod：</b>呼叫 <code>strategy.CreatePaymentMethodAsync()</code>，用使用者這次輸入的明碼卡號向 Stripe 換取一次性的 <code>pm_xxx</code> Token。</li>
+<li><b>建立扣款意圖：</b>呼叫 <code>strategy.PaymentIntentAsync(request, "off_session")</code>，並固定帶入 <code>setup_future_usage=off_session</code>，等於跟 Stripe 講「這張卡之後我還會在使用者不在場的情況下扣款」，Stripe 才會允許之後做靜默扣款。</li>
+<li><b>判斷是否要綁卡：</b>只有 <code>PaymentIntent.status</code> 為 <code>succeeded</code> 或 <code>requires_action</code>（代表這張卡本身有效）時才進行綁定；若付款直接失敗，這張卡不值得留下，直接略過。</li>
+<li><b>依 Customer 是否存在分流：</b>已有 Customer（<code>data.Count == 1</code>）就呼叫 <code>/payment_methods/{id}/attach</code> 把新卡掛到既有 Customer 底下；尚無 Customer（<code>data.Count == 0</code>）就呼叫 <code>/customers</code> 直接建立 Customer 並帶入卡片完成綁定。</li>
+</ol>
+<div class="pte-why"><b>為什麼需要它：</b>把「扣款」與「綁卡」兩件事合而為一次 API 互動完成，同時用 <code>data.Count</code> 保證一個會員在同一子帳號下只會有一個 Stripe Customer，避免重複建立造成之後舊卡復用查詢時出現多筆歧義資料。</div>
+</div>
+
+<div class="pte-proc-card p3">
+<div class="pte-proc-head">
+<div class="pte-proc-icon">🔁</div>
+<div>
+<h4 class="pte-name">ReusePaymentMethodPaymentIntentProcess</h4>
+<div class="pte-role">情境三・舊卡復用專用</div>
+</div>
+</div>
+<p class="pte-purpose">負責「驗證使用者傳入的 <code>customer_id</code> 是否真的屬於自己，通過後才用既有的 <code>payment_method</code> Token 直接扣款」，不再重新輸入卡號、不再重新建立 PaymentMethod。</p>
+<ol class="pte-steps">
+<li><b>合法性檢查（防冒用）：</b>用外層 <code>StripePlugin.ReusePaymentMethod()</code> 事先查好的 <code>CustomersSearch</code> 結果，執行 <code>data.Any(x => x.id == context.CustomerId)</code>，確認前端傳來的 <code>customer_id</code> 確實存在於「這個會員」名下的 Stripe Customer 清單中。</li>
+<li><b>驗證失敗直接擋下：</b>若傳入的 <code>customer_id</code> 對不上，代表可能是竄改請求、冒用他人已綁定的卡，直接 <code>throw NotSupportedException("Illegal Customer")</code>，讓外層拋出 HTTP 500，不會呼叫任何扣款 API。</li>
+<li><b>驗證通過才扣款：</b>呼叫 <code>strategy.PaymentIntentAsync(request, null)</code>（第二參數傳 <code>null</code>，代表不覆寫 <code>setup_future_usage</code>，因為卡片早已在情境二綁定過），直接帶已存的 <code>payment_method</code> Token 與 <code>customer_id</code> 建立並確認 PaymentIntent。</li>
+<li><b>省略建卡流程：</b>與情境一 / 二不同，這裡完全不呼叫 <code>/v1/payment_methods</code>，因為 Token 早就存在，只需一支 <code>/v1/payment_intents</code> API 即可完成扣款。</li>
+</ol>
+<div class="pte-why"><b>為什麼需要它：</b>是「快速結帳 / 記住卡片」體驗的核心安全閘門，讓已綁卡會員不需重新輸入卡號就能扣款，同時透過 Customer 歸屬驗證，避免有心人士竄改 <code>payment_method</code>／<code>customer_id</code> 參數盜用他人已存的信用卡。</div>
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 🔑 mweb 如何取得 customer_id / payment_method-->
+
+<style>
+.pte-timeline { background: #171f30; border: 1px solid #2b3654; border-radius: 14px; padding: 22px 24px; margin: 16px 0 22px; }
+.pte-step { display: grid; grid-template-columns: 40px 1fr; gap: 16px; }
+.pte-step .pte-dot-col { display: flex; flex-direction: column; align-items: center; }
+.pte-step .pte-dot { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#6ee7ff,#a78bfa); color: #0b0f1a; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pte-step .pte-line { flex: 1; width: 2px; background: #2b3654; margin: 4px 0; }
+.pte-step:last-child .pte-line { display: none; }
+.pte-step .pte-content { padding-bottom: 26px; }
+.pte-step .pte-content .pte-title { font-weight: 700; font-size: 0.92rem; margin-bottom: 4px; color: #e8ecf6; }
+.pte-step .pte-content .pte-title code { font-size: 0.8rem; background: #0b0f1a; color: #6ee7ff; padding: 2px 8px; border-radius: 6px; }
+.pte-step .pte-content .pte-desc-text { font-size: 0.86rem; color: #93a1c2; margin-bottom: 8px; line-height: 1.75; }
+.pte-step .pte-content .pte-loc { font-size: 0.72rem; color: #6b7a9e; margin-top: 6px; }
+</style>
+
+CompleteForNewCartV2 進入 `ThirdPartyProcess` Pipeline 後，`customer_id` / `payment_method` 並不是由前端直接送出明碼，而是 mweb 依「快速結帳識別碼 identity」在後端撈出，並在付款完成後把 Stripe 回傳的新 Token 寫回資料庫，形成一個完整的閉環：
+
+<div class="pte-timeline">
+<div class="pte-step">
+<div class="pte-dot-col"><div class="pte-dot">1</div><div class="pte-line"></div></div>
+<div class="pte-content">
+<div class="pte-title">前端請求只帶「identity」或什麼都不帶　<code>PayTypeExpressProcessor</code></div>
+<div class="pte-desc-text">Pipeline 前段執行。若商店有開啟「記住信用卡」，且使用者這次沒有輸入新卡號，就用 <code>MemberId + ShopId + PayProfileType</code> 查出該會員「預設」的 PayTypeExpress 記錄，把它的 <code>Identity</code> 塞進 <code>context.ThirdPartyPaymentInfo.ExtendInfo["identity"]</code>（此時卡號等機敏資料尚未載入，只有識別碼）。</div>
+<pre class="pte-pre">var payTypeExpressEntity = _payTypeExpressService
+    .GetDefaultPayTypeExpress(memberId, payProfileType, shopId, gatewayType);
+
+extendInfo.Add("identity", payTypeExpressEntity.Identity);
+context.ThirdPartyPaymentInfo.ExtendInfo = extendInfo;</pre>
+<div class="pte-loc">PayProcesses/Processors/PayTypeExpressProcessor.cs · AssignCreditCardInfo()</div>
+</div>
+</div>
+
+<div class="pte-step">
+<div class="pte-dot-col"><div class="pte-dot">2</div><div class="pte-line"></div></div>
+<div class="pte-content">
+<div class="pte-title">用 identity 撈出真正的 Token　<code>ArrangePayTypeExpressInfoProcessor</code></div>
+<div class="pte-desc-text">緊接著執行。用上一步的 <code>identity</code> 到 <code>PayTypeExpress</code> 資料表查出同一筆記錄，反序列化其 <code>Info</code>（JSON）欄位，取得內含 <code>customer_id</code>／<code>payment_method</code> 的機敏資訊，包成 <code>paytype_express_info</code> 放回 context，準備交給 PMW。</div>
+<pre class="pte-pre">var sameIdentity = payTypeExpressEntity.Single(i => i.Identity == identity);
+var payTypeExpressInfo = _payTypeExpressService.GetPayTypeExpressInfo(sameIdentity);
+
+context.ThirdPartyPaymentInfo.ExtendInfo = new Dictionary&lt;string, object&gt;
+{
+    { "identity", sameIdentity.Identity },
+    { "paytype_express_info", payTypeExpressInfo.ExtendInfo }   <span class="c">// 內含 customer_id / payment_method</span>
+};</pre>
+<div class="pte-loc">PayProcesses/Processors/ArrangePayTypeExpressInfoProcessor.cs · Process()</div>
+</div>
+</div>
+
+<div class="pte-step">
+<div class="pte-dot-col"><div class="pte-dot">3</div><div class="pte-line"></div></div>
+<div class="pte-content">
+<div class="pte-title">組裝送給 PMW 的 ExtendInfo　<code>StripePayChannelService.GetPayExtendInfo()</code></div>
+<div class="pte-desc-text"><code>ThirdPartyPayApiProcessor</code> 呼叫 <code>TradesOrderPaymentService.ProcessPayment()</code> 時，實際呼叫此方法組出要 POST 給 PMW <code>/api/v1/Pay/CreditCardOnce_Stripe/{tgCode}</code> 的 Body。這裡才是 <code>customer_id</code> / <code>payment_method</code> 真正被放進送往 PMW 請求的地方，來源就是上一步的 <code>paytype_express_info</code>。</div>
+<pre class="pte-pre"><span class="c">// 定期購自動成單：從 RegularOrderCheckoutInfo JSON 取值（另一條路徑）</span>
+extendInfo.Add("customer_id", stripeRegularOrderCheckOurInfo.CustomerId);
+extendInfo.Add("payment_method", stripeRegularOrderCheckOurInfo.PaymentMethod);
+
+<span class="c">// 一般快速結帳：優先從 paytype_express_info 取值</span>
+var payTypeExpressInfo = thirdPartyPaymentInfo["paytype_express_info"].ObjToDictionary&lt;object&gt;();
+payTypeExpressInfo.TryGetValue("customer_id", out object customerId);
+payTypeExpressInfo.TryGetValue("payment_method", out object paymentMethod);
+
+extendInfo.Add("customer_id", customerId);       <span class="c">// → 對應 PMW 情境三判斷欄位</span>
+extendInfo.Add("payment_method", paymentMethod); <span class="c">// → 對應 PMW 情境三判斷欄位</span></pre>
+<div class="pte-desc-text">若查無 <code>paytype_express_info</code>（沒有 identity、沒有存過卡），就不會帶這兩個欄位，PMW 端 <code>StripePlugin.Pay()</code> 判斷落到情境一或情境二。</div>
+<div class="pte-loc">PayChannel/StripePayChannelService.cs · GetPayExtendInfo()</div>
+</div>
+</div>
+
+<div class="pte-step">
+<div class="pte-dot-col"><div class="pte-dot">4</div><div class="pte-line"></div></div>
+<div class="pte-content">
+<div class="pte-title">PMW 回傳新 Token，暫存於 context　<code>ChangeExtendInfoAfterPaymentResult</code></div>
+<div class="pte-desc-text">情境二（首次綁卡）付款完成後，PMW 回應的 <code>ThirdPartyPayResponseEntity</code> 會帶回新建立的 <code>customer_id</code> / <code>payment_method</code>（見前面「情境二」的 attach / create customer 結果）。mweb 收到後先暫存於 <code>context.ThirdPartyPaymentInfo.ExtendInfo</code>，供同一次請求後續 Processor 使用。</div>
+<pre class="pte-pre">if (paymentResult.ExtendInfo["payment_method"] != null && paymentResult.ExtendInfo["customer_id"] != null)
+{
+    context.ThirdPartyPaymentInfo.ExtendInfo = new Dictionary&lt;string, object&gt;
+    {
+        { "payment_method", paymentResult.ExtendInfo["payment_method"] },
+        { "customer_id", paymentResult.ExtendInfo["customer_id"] }
+    };
+}</pre>
+<div class="pte-loc">PayChannel/StripePayChannelService.cs · SetPayTypeExpressInfo()</div>
+</div>
+</div>
+
+<div class="pte-step">
+<div class="pte-dot-col"><div class="pte-dot">5</div></div>
+<div class="pte-content">
+<div class="pte-title">寫回 PayTypeExpress 資料表，供下次結帳使用　<code>AfterOrderProcessor</code></div>
+<div class="pte-desc-text">Pipeline 尾端執行。把暫存的 <code>customer_id</code> / <code>payment_method</code> 包成 <code>PayTypeExpressInfoForStripeEntity</code> 序列化成 JSON，寫入（新增或更新）<code>PayTypeExpress</code> 資料表的 <code>Info</code> 欄位，並清快取。下次結帳時 Step 1、2 就能撈到這筆記錄，形成「首次明碼輸入 → 綁卡 → 之後都用 Token 復用」的閉環。</div>
+<pre class="pte-pre">context.ThirdPartyPaymentInfo.ExtendInfo.TryGetValue("customer_id", out object customer);
+context.ThirdPartyPaymentInfo.ExtendInfo.TryGetValue("payment_method", out object paymentMethod);
+
+stripeData.ExtendInfo = new PayTypeExpressInfoForStripeEntity
+{
+    Customer = customer?.ToString(),
+    PaymentMethod = paymentMethod?.ToString(),
+    Country = context.CreditCardInfo.IssueCountryCode
+};
+
+_payTypeExpressService.CreatePayTypeExpress(payTypeExpressCurrent);  <span class="c">// 或 UpdatePayTypeExpress()</span>
+_payTypeExpressService.RemovePayTypeExpressCache(memberId, payProfileType, shopId);</pre>
+<div class="pte-loc">PayProcesses/Processors/AfterOrderProcessor.cs · UpdatePayTypeExpressData() / GetPayTypeExpressInfo()</div>
+</div>
+</div>
+</div>
+
+<div class="pte-note design"><span class="pte-note-icon">💡</span><span><b>關鍵設計：</b>customer_id / payment_method 全程「不落地到前端」，瀏覽器只知道 <code>identity</code>，真正的 Stripe Token 只存在 mweb 後端資料庫（下一分頁的 <code>PayTypeExpress_Info</code>）與 PMW／Stripe 之間，降低外洩風險，同時讓使用者能用「上次的卡」快速結帳而不必重新輸入卡號。</span></div>
+
+<!-- endtab -->
+
+<!-- tab 🗄️ PayTypeExpress 資料表-->
+
+<style>
+.pte-dbtable { margin-top: 10px; border: 1px solid #2b3654; border-radius: 10px; overflow: hidden; background: #171f30; }
+.pte-dbtable .pte-row { display: grid; grid-template-columns: 220px 1fr; border-bottom: 1px solid #2b3654; }
+.pte-dbtable .pte-row:last-child { border-bottom: none; }
+.pte-dbtable .pte-row .pte-cell-k { padding: 10px 14px; background: rgba(255,255,255,0.03); font-family: Consolas, monospace; font-size: 0.78rem; color: #6ee7ff; }
+.pte-dbtable .pte-row .pte-cell-v { padding: 10px 14px; font-size: 0.84rem; color: #e8ecf6; }
+</style>
+
+`aaa53.png` 這張 DB 查詢截圖是 `PayTypeExpress` 資料表的真實資料，完整欄位定義與 Info 欄位的 JSON 結構整理如下，方便日後查表對照。
+
+## 🗂️ 資料表完整欄位
+
+<div class="pte-dbtable">
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_Id</div><div class="pte-cell-v"><code>bigint</code>，主鍵，流水號</div></div>
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_ShopId</div><div class="pte-cell-v"><code>bigint</code>，商店序號</div></div>
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_MemberId</div><div class="pte-cell-v"><code>int</code>，會員序號</div></div>
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_PayProfileType</div><div class="pte-cell-v"><code>varchar</code>，付款方式類型，Stripe 固定為 <code>CreditCardOnce_Stripe</code></div></div>
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_PaymentServiceProvider</div><div class="pte-cell-v"><code>varchar</code>，金流服務商，Stripe 走 PMW 固定為 <code>PaymentMiddleware</code></div></div>
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_Identity</div><div class="pte-cell-v"><code>varchar</code>，「這張已存卡」的識別碼（一長串亂碼），前端／Processor 用它指定要用哪張卡，本身不含卡號或 Token</div></div>
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_IsDefault</div><div class="pte-cell-v"><code>bit</code>，是否為該會員此金流的預設卡，決定 <code>GetDefaultPayTypeExpress()</code> 撈到哪一筆</div></div>
+<div class="pte-row"><div class="pte-cell-k">PayTypeExpress_Info</div><div class="pte-cell-v"><code>nvarchar</code>，JSON 字串，機敏內容本體，結構見下方</div></div>
+</div>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span>對應 Entity：<b>DA/WebStoreDBV2/Tables/PayTypeExpress.cs</b>（EF 產生的資料表模型）。</span></div>
+
+## 🧬 Info 欄位 JSON 結構（Stripe）
+
+`PayTypeExpress_Info` 反序列化為 `PayTypeExpressCreditCardEntity<PayTypeExpressInfoForStripeEntity>`，外層是卡片顯示用資訊，`ExtendInfo` 才是真正要帶給 PMW 的付款憑證：
+
+<pre class="pte-pre">{
+  "Issuer": null,                     <span class="c">// 發卡銀行（Stripe 多為 null）</span>
+  "Association": "Visa",              <span class="c">// 發卡組織：Visa / MasterCard / UnionPay...</span>
+  "No": "************6274",           <span class="c">// 卡號（僅顯示末四碼，其餘遮罩）</span>
+  "Month": "08",                      <span class="c">// 有效月份</span>
+  "Year": "27",                       <span class="c">// 有效年份</span>
+  "ExtendInfo": {
+    "customer_id": "cus_xxxxxxxxxxxx",    <span class="n">// ← 帶給 PMW 情境三判斷欄位</span>
+    "payment_method": "pm_xxxxxxxxxxxx",  <span class="n">// ← 帶給 PMW 情境三判斷欄位</span>
+    "country": "TW"                       <span class="c">// 發卡行國家</span>
+  }
+}</pre>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span>對應 Entity：<b>BE/PayTypeExpress/PayTypeExpressCreditCardEntity.cs</b>（外層 <code>Issuer/Association/No/Month/Year/ExtendInfo</code>）＋ <b>BE/PayTypeExpress/PayTypeExpressInfoForStripeEntity.cs</b>（<code>ExtendInfo</code> 內的 <code>customer_id/payment_method/country</code>，皆以 <code>[JsonProperty]</code> 對應小寫底線命名）。</span></div>
+
+## 📋 實際資料範例（節錄自 DB 查詢結果）
+
+<div class="pte-table-wrap">
+<table>
+<tr><th>欄位</th><th>範例值</th></tr>
+<tr><td>PayTypeExpress_Id</td><td><code>189518</code></td></tr>
+<tr><td>PayTypeExpress_ShopId</td><td><code>17</code></td></tr>
+<tr><td>PayTypeExpress_MemberId</td><td><code>1598546</code></td></tr>
+<tr><td>PayTypeExpress_PayProfileType</td><td><code>CreditCardOnce_Stripe</code></td></tr>
+<tr><td>PayTypeExpress_PaymentServiceProvider</td><td><code>PaymentMiddleware</code></td></tr>
+<tr><td>PayTypeExpress_Identity</td><td><code>9E160DB1471373603EF57A8F9455BCD0BEDA2C86DCE77BD31...</code></td></tr>
+<tr><td>PayTypeExpress_IsDefault</td><td><code>1</code></td></tr>
+<tr><td>PayTypeExpress_Info</td><td><code>{"Issuer":null,"Association":"Visa","No":"************6274","Mo...</code>（同上方 JSON 結構，末端截斷）</td></tr>
+</table>
+</div>
+
+<div class="pte-note design"><span class="pte-note-icon">💡</span><span><b>關鍵設計：</b>customer_id / payment_method 全程「不落地到前端」，瀏覽器只知道 <code>identity</code>，真正的 Stripe Token 只存在 mweb 後端資料庫（<code>PayTypeExpress_Info</code>）與 PMW／Stripe 之間，降低外洩風險，同時讓使用者能用「上次的卡」快速結帳而不必重新輸入卡號。</span></div>
+
+<!-- endtab -->
+
+<!-- tab 🧩 PMW 程式碼對照-->
+
+情境判斷的核心程式碼，位於 `nineyi.payment.middleware` → `Plugins/NineYi.PaymentMiddleware.Plugins.Stripe/StripePlugin.cs`：
+
+<pre class="pte-pre"><span class="n">public async Task&lt;PaymentResponseEntity...&gt; Pay(request, headers, payMethod)
+{</span>
+    var strategy = GetPaymentFlowStrategy(request.ExtendInfo.StripePaymentFlow);
+
+    <span class="c">// 行動錢包（Apple Pay / Google Pay）另外處理，不屬於三情境</span>
+    if (_mobileWalletMethods.Contains(payMethod))
+        return await strategy.ProcessMobileWalletPayment(request);
+
+    var context = new ReusePaymentMethodEntity { ...Strategy = strategy, Request = request };
+
+    <span class="s">// 情境三：舊卡復用 — payment_method 與 customer_id 都有值</span>
+    if (!string.IsNullOrWhiteSpace(request.ExtendInfo.PaymentMethod) &&
+        !string.IsNullOrWhiteSpace(request.ExtendInfo.CustomerId))
+    {
+        response = await ReusePaymentMethod(context, ReusePaymentMethodPaymentIntent);
+    }
+    <span class="m">// 情境二：首次綁卡 — is_reuse_payment_method == true</span>
+    else if (request.ExtendInfo.IsReusePaymentMethod == true)
+    {
+        response = await ReusePaymentMethod(context, RememberPaymentMethod);
+    }
+    <span class="n">// 情境一：單純 Pay — 兩者皆非</span>
+    else
+    {
+        response = await strategy.Pay(request);
+    }
+    <span class="n">return GetThirdPartyPayResponseEntity(request, response, context);
+}</span></pre>
+
+<div class="pte-note code">
+<span class="pte-note-icon">📄</span>
+<span>程式碼判斷順序固定為「情境三 → 情境二 → 情境一」，且一旦命中即不再往下判斷。<code>ReusePaymentMethod()</code> 內部會先呼叫 <code>CustomersSearchAsync</code> 查出該會員（<code>{shop_id}_{member_id}</code>）在 Stripe 的 Customer 記錄，再交給對應的 <code>IReusePaymentMethodProcess</code>（情境二為 <code>RememberPaymentMethodProcess</code>，情境三為 <code>ReusePaymentMethodPaymentIntentProcess</code>）執行後續動作。</span>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 🌱 首次消費 identity 從何而來-->
+
+第一次消費、這個會員在這間商店這個付款方式下 `PayTypeExpress` 表完全是空的時候，`identity` 是從哪冒出來的？答案是：**伺服器端自己用「這次剛輸入的卡片明細」現算一組 SHA256 雜湊值，算完立刻寫入 DB**，並不是從任何既有資料查出來的
+
+## 觸發點：`AfterOrderProcessor`（成立訂單後動作）
+
+`AfterOrderProcessor` 掛在幾乎所有付款完成流程（信用卡、ApplePay、ATM、LinePay…）的 Pipeline 尾端，付款成功、訂單成立後才會執行：
+
+<pre class="pte-pre"><span class="c">// AfterOrderProcessor.cs:330-390</span>
+<span class="n">// 沒勾選記住信用卡則整段略過</span>
+if (context.RememberCreditCardNo == false) return;
+
+<span class="n">// 查詢會員在此商店/付款方式下，DB 目前已有的記住卡片清單</span>
+var payTypeExpressList = this._payTypeExpressService.GetPayTypeExpressList(memberId, payProfileType, shopId);
+<span class="c">// ← 第一次消費時，這裡查出來是空 List</span>
+
+<span class="n">// 取得「這次刷卡」的卡片識別碼</span>
+var cardIdentity = this.GetCreditCardIdentity(context);
+
+var payTypeExpressCurrent = payTypeExpressList.FirstOrDefault(x =&gt;
+    x.Identity == cardIdentity &amp;&amp; x.PaymentServiceProvider == paymentServiceProvider);
+
+<span class="s">// 空 List 一定找不到，進入「新增」分支</span>
+if (payTypeExpressCurrent == null)
+{
+    payTypeExpressCurrent = new PayTypeExpressEntity
+    {
+        ShopId = shopId,
+        MemberId = memberId,
+        PayProfileType = payProfileType,
+        PaymentServiceProvider = paymentServiceProvider,
+        IsDefault = true,
+        Identity = this.GetPayTypeExpressIdentity(context),  <span class="m">// ← 現算出來的新 identity</span>
+        Info = this.GetPayTypeExpressInfo(context)
+    };
+
+    this._payTypeExpressService.CreatePayTypeExpress(payTypeExpressCurrent);  <span class="c">// ← 真正 INSERT</span>
+    this._payTypeExpressService.RemovePayTypeExpressCache(memberId, payProfileType, shopId);
+}</pre>
+
+## 🧮 `GetPayTypeExpressIdentity()`：identity 的真正計算公式
+
+<pre class="pte-pre"><span class="c">// AfterOrderProcessor.cs:610-641</span>
+<span class="n">private string GetPayTypeExpressIdentity(PayProcessContextEntity context)
+{</span>
+    var shopId = context.ShoppingCartV2.ShopId;
+    var memberId = Convert.ToInt32(context.MemberId);
+    string creditCardIdentity;
+
+    switch (context.PayProfileType)
+    {
+        <span class="s">case CreditCardOnce:
+        case CreditCardInstallment:</span>
+            <span class="c">// NCCC / TapPay：用 TapPay SDK 回傳的識別碼 + 到期日</span>
+            var identificationCode = context.TapPayCardInfo?.IdentificationCode
+                                      ?? context.PaymentInfo?.CreditCardInfo?.CardCode;
+            var creditCardExpiryDate = context.TapPayCardInfo?.ExpiryDate
+                                        ?? context.PaymentInfo?.CreditCardInfo?.ExpiryDate;
+            creditCardIdentity = $"{identificationCode}_{creditCardExpiryDate}";
+            break;
+
+        <span class="m">default:</span>
+            <span class="c">// Stripe / CheckoutDotCom / KPay：直接用「這次使用者剛輸入的卡號 + 到期日」</span>
+            creditCardIdentity = $"{context.CreditCardInfo.CreditCardNo}_{context.CreditCardInfo.CreditCardDate}";
+            break;
+    }
+
+    var result = $"{shopId}_{memberId}_{creditCardIdentity}";
+    <span class="n">return result.ToSHA256();</span>  <span class="c">// ← 最終的 identity 字串</span>
+<span class="n">}</span></pre>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span>對應公式：<b>Stripe/CheckoutDotCom/KPay</b> 通道 → <code>identity = SHA256(shopId_memberId_卡號_到期日)</code>；<b>NCCC/TapPay</b> 通道 → <code>identity = SHA256(shopId_memberId_TapPay識別碼_到期日)</code>。輸入完全來自使用者「這次結帳畫面上親自輸入」的卡片明細，不依賴任何既有 DB 資料。</span></div>
+
+## 🗝️ 為什麼這樣設計：用卡片特徵值做冪等 key
+
+<div class="pte-note design"><span class="pte-note-icon">💡</span><span><b>關鍵設計：</b>同一張卡（卡號 + 到期日相同）每次現算出來的 SHA256 都會是同一組值，因此即使「第一次沒有資料可查」，系統也能在首刷當下自己生成、自己存證；下次同一張卡再刷時，兩邊算出的 <code>identity</code> 會對得上，藉此判斷「是不是同一張已記住的卡」，而不必額外維護一組自增序號或額外的比對機制。</span></div>
+
+## 🔁 兩個時機的對照
+
+<div class="pte-dbtable">
+<div class="pte-row"><div class="pte-cell-k">第一次消費<br>（DB 無資料）</div><div class="pte-cell-v">伺服器用「這次輸入的卡片明細」現算 <code>SHA256(shopId_memberId_卡號/識別碼_到期日)</code>，並由 <code>AfterOrderProcessor</code> 在訂單成立後立刻呼叫 <code>CreatePayTypeExpress</code> 寫入 DB</div></div>
+<div class="pte-row"><div class="pte-cell-k">後續消費<br>（DB 已有記錄）</div><div class="pte-cell-v">直接從 DB <code>PayTypeExpress</code> 表撈出上次算好、存好的那筆 <code>Identity</code>，經 Shopping 服務 <code>PayTypeExpressProcessor</code> 回填給前端，前端原樣帶回，mweb 端再用它反查機敏資料（見「🔑 mweb 如何取得 customer_id / payment_method」分頁）</div></div>
+</div>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span>對應程式碼：<b>WebStore/Frontend/BLV2/PayProcesses/Processors/AfterOrderProcessor.cs</b>（<code>GetCreditCardIdentity</code> 610 行前、<code>GetPayTypeExpressIdentity</code> 610-641 行、新增分支 365-390 行）＋ <b>WebStore/DA/WebStoreDBV2/Repositories/PayTypeExpressRepository.cs</b>（<code>CreatePayTypeExpress</code> 102-120 行，真正執行 INSERT 的地方）。</span></div>
+
+<!-- endtab -->
+
+<!-- tab 🌐 跨服務完整鏈路：Shopping → Cart → mweb-->
+
+前面幾個分頁都是站在 mweb（`nineyi.webstore.mobilewebmall`）這個 repo 裡面看事情，但實際上結帳頁 `identity` 的產生與回填，橫跨了三個各自獨立部署的服務。這個分頁把「使用者打開結帳頁」到「送出付款」這一整趟旅程，按實際呼叫順序完整串起來，釐清 `is_reuse_payment_method`／`identity`／`ExtendInfo["identity"]` 到底是誰、在哪個服務、哪一支程式碼裡被組裝跟傳遞的。
+
+## 🧭 三個服務各自的角色
+
+<div class="pte-dbtable">
+<div class="pte-row"><div class="pte-cell-k">Shopping<br><code>C:\91APP\Shopping</code></div><div class="pte-cell-v">前台結帳頁 API 入口（<code>GET api/checkout</code>、<code>api/checkout/info</code>），負責組出畫面要顯示的所有資料，包含「記住這張卡」checkbox 狀態與已記住卡片摘要</div></div>
+<div class="pte-row"><div class="pte-cell-k">Cart<br><code>C:\91APP\Cart\cart2\nine1.cart</code></div><div class="pte-cell-v">購物車／結帳快照存放於 Redis，並負責 <code>api/checkouts/get</code>（給 Shopping 讀快照）與 <code>api/checkouts/complete</code>（送出付款，轉呼叫 mweb）</div></div>
+<div class="pte-row"><div class="pte-cell-k">mweb<br><code>nineyi.webstore.mobilewebmall</code></div><div class="pte-cell-v">真正執行付款、寫入訂單與 <code>PayTypeExpress</code> 表的地方，對外入口是 <code>tradesOrderLite/CompleteForNewCartV2</code></div></div>
+</div>
+
+## 1️⃣ 開啟結帳頁：`GET api/checkout?checkoutUniqueKey=...`（Shopping 服務）
+
+`CheckoutController.Get` → `CheckoutService.GetCartFromP2Async` 依序跑 12 段 Processor Pipeline（`ProcessorDefinitionCenter.GetCheckoutProcessorLayers`），其中兩段是本次追蹤的重點：
+
+<pre class="pte-pre"><span class="c">// Stage 1：GetCheckoutProcessor 呼叫 Cart 服務讀 Redis 快照</span>
+<span class="n">GetCheckoutProcessor</span> → Cart <span class="s">api/checkouts/get</span>（純讀 Redis，快照是建立 checkout 時寫入的）
+
+<span class="c">// Stage 6：決定「記住這張卡」checkbox 要不要顯示</span>
+<span class="n">GetPayProcessDataProcessor</span> → 讀 <span class="m">ShopDefault.IsRememberCreditCard</span>（PaymentMiddleWare 閘道設定）
+                            → 組出 <span class="m">IsEnabledRememberCreditCardNo</span>
+
+<span class="c">// Stage 7：若已啟用記住卡，撈出上次記住的卡片摘要</span>
+<span class="n">PayTypeExpressProcessor</span>（Shopping 版本） → <span class="m">PayTypeExpressService.GetDefaultPayTypeExpressesAsync(...)</span>
+                            （gateway type = <span class="s">"PaymentMiddleWare"</span>）
+                            → 組出 <span class="m">PaymentMiddlewareCreditCardInfoEntity</span>（含 <span class="m">Identity</span>）
+                            → 塞進 <span class="n">context.Data.DisplayCreditCard.PaymentMiddlewareCreditCardInfo</span></pre>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span>對應：<b>Shopping/.../CheckoutProcessor/GetPayProcessDataProcessor.cs</b>（153-192 行）＋ <b>Shopping/.../CheckoutProcessor/PayTypeExpressProcessor.cs</b>（Shopping 端獨立實作，非 mweb 那支同名類別，57-151 行）。回應型別為 <code>IGetCheckoutResponseEntity</code>（前端 <code>types.ts:782-839</code>），內含 <code>isEnabledRememberCreditCardNo</code> 與 <code>displayCreditCard</code>。</span></div>
+
+<div class="pte-note warn"><span class="pte-note-icon">⚠️</span><span>容易混淆的地方：<code>api/checkout/info</code> 是完全不同的另一支 API，只回傳海外配送聲明／訂購須知／金物流顯示樣式三個純顯示欄位，跟金流、記住信用卡完全無關；真正跟 checkbox、卡片摘要有關的是 <code>api/checkout?checkoutUniqueKey=...</code>（即 <code>getCheckout</code>）。</span></span></div>
+
+## 2️⃣ 使用者按下送出：`api/checkouts/complete`（Cart 服務）
+
+前端把畫面上（可能是使用者剛輸入的新卡，也可能是「記住的卡」原樣帶回的）`PaymentMiddlewareCreditCardInfo.Identity` 送回 Cart 服務。Cart 端真正的閉環發生在：
+
+<pre class="pte-pre"><span class="c">// GetPayDataProcessor.cs:560-624</span>
+<span class="n">AssignPaymentMiddlewareCreditCardInfo</span>(requestCreditCardInfo, payProcessContext)
+{
+    <span class="s">// 把前端回傳的 Identity 寫入 mweb 認得的欄位</span>
+    payProcessContext.ThirdPartyPaymentInfo.ExtendInfo["identity"] = requestCreditCardInfo.Identity;
+}</pre>
+
+<div class="pte-note code"><span class="pte-note-icon">📄</span><span>對應：<b>Cart/cart2/.../Processor/Checkout/Complete/GetPayDataProcessor.cs</b>（560-660+ 行）。這裡組出來的 <code>payProcessContext</code>，其型別正是 mweb 的 <b>PayProcessContextEntity</b>——也就是這份文件從頭到尾在討論的那個 <code>context</code>。組好之後，Cart 服務呼叫 mweb 的 <code>tradesOrderLite/CompleteForNewCartV2</code>，正式進入本文件其他分頁描述的付款流程。</span></div>
+
+## 🔁 五步驟收斂圖
+
+<div class="pte-dbtable">
+<div class="pte-row"><div class="pte-cell-k">① 開啟結帳頁</div><div class="pte-cell-v">Shopping <code>GetCheckoutProcessor</code> 呼叫 Cart 讀 Redis 快照，組出畫面資料</div></div>
+<div class="pte-row"><div class="pte-cell-k">② 顯示「記住這張卡」</div><div class="pte-cell-v">Shopping <code>GetPayProcessDataProcessor</code> + <code>PayTypeExpressProcessor</code> 決定 checkbox 狀態與卡片摘要（含 DB 撈出的 <code>Identity</code>）</div></div>
+<div class="pte-row"><div class="pte-cell-k">③ 前端原樣帶回</div><div class="pte-cell-v">使用者送出付款，前端把 <code>Identity</code>（新卡或舊卡皆然）原封不動送到 Cart <code>api/checkouts/complete</code></div></div>
+<div class="pte-row"><div class="pte-cell-k">④ Cart 轉譯欄位</div><div class="pte-cell-v"><code>GetPayDataProcessor.AssignPaymentMiddlewareCreditCardInfo</code> 把 <code>Identity</code> 寫入 <code>payProcessContext.ThirdPartyPaymentInfo.ExtendInfo["identity"]</code></div></div>
+<div class="pte-row"><div class="pte-cell-k">⑤ 進入 mweb 付款流程</div><div class="pte-cell-v">呼叫 <code>tradesOrderLite/CompleteForNewCartV2</code>，mweb <code>ArrangePayTypeExpressInfoProcessor</code> 用 <code>thirdPartyPaymentInfo.ExtendInfo["identity"]</code> 反查 DB 機敏資料；若是全新卡片（DB 查無資料），則由 <code>AfterOrderProcessor</code> 現算新的 <code>identity</code> 並寫回 DB（詳見「🌱 首次消費 identity 從何而來」分頁）</div></div>
+</div>
+
+<div class="pte-note design"><span class="pte-note-icon">💡</span><span><b>關鍵理解：</b>Shopping／Cart／mweb 三個服務各自都有自己的 <code>PayTypeExpressProcessor</code>／付款相關 Entity，彼此不是互相呼叫同一份程式碼，而是各自讀同一份 DB 設定（<code>ShopDefault.IsRememberCreditCard</code>）、傳遞同一個字串欄位（<code>identity</code>）來達成邏輯一致；一旦要修改「記住信用卡」相關邏輯，必須同時檢查三個 repo，而不是只改 mweb 這一份。</span></div>
+
+<!-- endtab -->
+
+{% endtabs %}
+

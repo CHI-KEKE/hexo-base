@@ -1,0 +1,771 @@
+---
+title: Refund-WebStores
+date: 2026-08-13 15:42:00
+categories: Payment
+top_img: https://raw.githubusercontent.com/CHI-KEKE/Payment/refs/heads/master/pics/Refund/webstore-refund-landing.png
+cover: https://raw.githubusercontent.com/CHI-KEKE/Payment/refs/heads/master/pics/Refund/webstore-refund-landing.png
+toc:
+toc_number:
+comments:
+tags:
+---
+
+{% tabs 退費計算%}
+
+<!-- tab 架構總覽-->
+
+<style>
+.srf{
+  display:block;
+  font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'PingFang TC','Microsoft JhengHei',sans-serif;
+  background:
+    radial-gradient(700px 400px at 90% -5%, rgba(255,182,72,.18), transparent 60%),
+    radial-gradient(900px 500px at -5% 10%, rgba(124,108,247,.10), transparent 55%),
+    #fbf9f4;
+  color:#1f2430!important;
+  line-height:1.75;
+  border-radius:20px;
+  padding:1px 0 28px;
+  margin:0 0 20px;
+  overflow:hidden;
+  --ink:#1f2430; --sub:#5b6472; --card:#ffffff; --line:#ece7dc;
+  --brand:#ff6b4a; --brand2:#ffb648; --teal:#12a594; --violet:#7c6cf7; --blue:#3b82f6; --danger:#e5484d;
+  --shadow:0 10px 30px -12px rgba(31,36,48,.15);
+}
+.srf *{box-sizing:border-box;}
+.srf a{color:var(--brand)!important;text-decoration:none;}
+.srf a:hover{text-decoration:underline;}
+.srf .srf-hero{padding:48px 6vw 34px;text-align:center;position:relative;overflow:hidden;}
+.srf .srf-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg, rgba(255,182,72,.10), transparent 70%);pointer-events:none;}
+.srf .srf-eyebrow{display:inline-block;font-size:.78rem;letter-spacing:.16em;color:var(--brand)!important;text-transform:uppercase;font-weight:700;margin-bottom:12px;background:rgba(255,107,74,.1);padding:6px 14px;border-radius:999px;}
+.srf .srf-hero h1{font-size:1.7rem;margin:0 0 12px;color:var(--ink)!important;font-weight:800;}
+.srf .srf-hero p{color:var(--sub)!important;max-width:700px;margin:0 auto;font-size:1rem;}
+.srf .srf-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;}
+.srf .srf-badge{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:999px;font-size:.8rem;color:var(--sub)!important;box-shadow:var(--shadow);}
+.srf .srf-container{padding:0 5vw;}
+.srf section{margin-bottom:44px;}
+.srf .srf-section-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.srf .srf-section-head .srf-chip{flex:none;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,#1f2430,#485068);color:#fff!important;font-size:1rem;box-shadow:var(--shadow);}
+.srf .srf-section-head.ok .srf-chip{background:linear-gradient(135deg,#12a594,#5ee6bf);}
+.srf .srf-section-head.warn .srf-chip{background:linear-gradient(135deg,#ff6b4a,#ffb648);}
+.srf .srf-section-head.purple .srf-chip{background:linear-gradient(135deg,#7c6cf7,#a78bfa);}
+.srf .srf-section-head h2{margin:0;font-size:1.3rem;font-weight:800;color:var(--ink)!important;}
+.srf h3{font-size:1.08rem;margin:26px 0 10px;color:var(--ink)!important;border-left:4px solid var(--brand);padding-left:10px;}
+.srf p{color:var(--sub)!important;}
+.srf .srf-card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px 22px;margin:14px 0;}
+.srf table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card)!important;border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:14px 0 22px;font-size:.88rem;box-shadow:var(--shadow);}
+.srf thead th{background:#f3f0e8!important;color:var(--ink)!important;text-align:left;padding:13px 16px;font-weight:800;border-bottom:1px solid var(--line);}
+.srf tbody td{padding:13px 16px;border-bottom:1px solid var(--line);color:#3b4150!important;vertical-align:top;background:var(--card)!important;}
+.srf tbody tr:last-child td{border-bottom:none;}
+.srf tbody tr:hover td{background:#fffaf2!important;}
+.srf tbody td strong{color:var(--ink)!important;}
+.srf tbody td code{color:#c2410c!important;}
+.srf code{font-family:Consolas,'SFMono-Regular','Liberation Mono',Menlo,monospace;background:#f1eee6!important;color:#c2410c!important;padding:2px 7px;border-radius:6px;font-size:.88em;border:1px solid #e9e3d5;}
+.srf pre.srf-pre{background:#1c1f2b!important;border:none;border-radius:16px;padding:20px 22px;overflow-x:auto;margin:16px 0;position:relative;color:#e9ecf7!important;font-size:.85rem!important;line-height:1.7!important;font-family:Consolas,'SFMono-Regular','Liberation Mono',Menlo,monospace!important;white-space:pre!important;box-shadow:var(--shadow);}
+.srf pre.srf-pre::before{content:attr(data-lang);position:absolute;top:12px;right:16px;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#8a92b2!important;font-family:'Segoe UI',sans-serif;}
+.srf .kw{color:#ff9d6c!important;} .srf .str{color:#c3e88d!important;} .srf .cm{color:#6b7394!important;font-style:italic;} .srf .fn{color:#7fd0ff!important;} .srf .type{color:#ffd479!important;} .srf .num{color:#c3e88d!important;} .srf .op{color:#ff6b9d!important;}
+.srf .srf-callout{border-radius:16px;padding:18px 22px;margin:18px 0;border:1px solid transparent;display:flex;gap:14px;}
+.srf .srf-callout .srf-icon{font-size:1.3rem;flex:none;}
+.srf .srf-callout.info{background:#eff6ff;border-color:#bfdbfe;}
+.srf .srf-callout.warn{background:#fffbeb;border-color:#fde68a;}
+.srf .srf-callout.danger{background:#fef2f2;border-color:#fecaca;}
+.srf .srf-callout.ok{background:#ecfdf5;border-color:#a7f3d0;}
+.srf .srf-callout p{margin:0;font-size:.92rem;color:#3b4150!important;}
+.srf .srf-callout strong{color:var(--ink)!important;}
+.srf .srf-file-path{font-family:Consolas,monospace;font-size:.76rem;color:var(--sub)!important;background:#f1eee6!important;display:inline-block;padding:3px 10px;border-radius:6px;margin:4px 0 12px;border:1px solid var(--line);}
+.srf .srf-tag{display:inline-block;font-size:.72rem;font-weight:800;padding:3px 11px;border-radius:999px;letter-spacing:.02em;}
+.srf .srf-tag.danger{background:#fee2e2!important;color:#b91c1c!important;}
+.srf .srf-tag.ok{background:#dcfce7!important;color:#15803d!important;}
+.srf .srf-tag.warn{background:#fef3c7!important;color:#b45309!important;}
+.srf .srf-tag.info{background:#e0f2fe!important;color:#0369a1!important;}
+.srf .srf-tag.purple{background:#ede9fe!important;color:#6d28d9!important;}
+.srf .srf-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0;}
+.srf .srf-summary-grid .srf-box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);border-top:4px solid var(--brand);position:relative;overflow:hidden;}
+.srf .srf-summary-grid .srf-box.trait{border-top-color:var(--brand);}
+.srf .srf-summary-grid .srf-box.risk{border-top-color:var(--brand2);}
+.srf .srf-summary-grid .srf-box.fix{border-top-color:var(--teal);}
+.srf .srf-summary-grid .srf-box h4{margin:0 0 8px;color:var(--ink)!important;font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;}
+.srf .srf-summary-grid .srf-box p{margin:0;font-size:.87rem;color:var(--sub)!important;}
+@media (max-width:780px){.srf .srf-summary-grid{grid-template-columns:1fr;}}
+.srf .srf-flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0;}
+.srf .srf-flow .srf-step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-size:.85rem;font-weight:700;color:var(--ink)!important;box-shadow:var(--shadow);}
+.srf .srf-flow .srf-step.cond{background:#fffbeb;border-color:#fde68a;color:#b45309!important;}
+.srf .srf-flow .srf-arrow{color:var(--violet)!important;font-size:1.2rem;font-weight:900;}
+.srf .srf-steps{display:flex;flex-direction:column;gap:14px;margin:16px 0 22px;}
+.srf .srf-stepcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;position:relative;padding-left:60px;box-shadow:var(--shadow);}
+.srf .srf-stepcard .srf-stepnum{position:absolute;left:16px;top:16px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff!important;font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
+.srf .srf-stepcard.cond .srf-stepnum{background:linear-gradient(135deg,#ffb454,#c97f2a);}
+.srf .srf-stepcard .srf-step-title{font-weight:700;color:var(--ink)!important;font-size:1rem;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.srf .srf-stepcard p{margin:6px 0;font-size:.9rem;color:var(--sub)!important;}
+.srf .srf-checklist{list-style:none;padding:0;margin:16px 0;}
+.srf .srf-checklist li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line);color:var(--sub)!important;}
+.srf .srf-checklist li:last-child{border-bottom:none;}
+.srf .srf-checklist li::before{content:"✓";flex:none;width:22px;height:22px;border-radius:7px;background:#dcfce7;color:#15803d!important;font-size:.75rem;display:flex;align-items:center;justify-content:center;margin-top:2px;font-weight:900;}
+.srf .srf-evidence{border:1px solid var(--line);background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:18px 20px;margin:16px 0 22px;}
+.srf .srf-evidence .srf-evidence-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.srf .srf-evidence .srf-evidence-head .srf-tag{background:var(--ink)!important;color:#fff!important;}
+.srf .risk-num{counter-reset:risknum;list-style:none;padding:0;margin:14px 0;}
+.srf .risk-num li{counter-increment:risknum;position:relative;padding:12px 16px 12px 48px;margin-bottom:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--sub)!important;box-shadow:var(--shadow);}
+.srf .risk-num li::before{content:counter(risknum);position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--danger);color:#fff!important;font-size:.78rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.srf footer{text-align:center;padding:30px 5vw 6px;color:var(--sub)!important;font-size:.82rem;border-top:1px solid var(--line);margin-top:8px;}
+@media (max-width:680px){.srf .srf-summary-grid{grid-template-columns:1fr;}}
+</style>
+
+<div class="srf">
+<div class="srf-hero">
+<span class="srf-eyebrow">Payment · MemberTradesOrder · 退貨退費</span>
+<h1>🧾 退貨/取消 Qty 與 TotalPayment 退費計算完整分析</h1>
+<p>MobileWebMall 前台會員訂單在「部分取消」「部分退貨」「補退款」情境下，實際數量與已付金額如何被重新計算，以及運費類型如何影響退費判斷。</p>
+<div class="srf-badges">
+<span class="srf-badge">MemberTradesOrderService</span>
+<span class="srf-badge">ReturnGoodsRequestService</span>
+<span class="srf-badge">ShopShippingType_FeeTypeDef</span>
+</div>
+</div>
+<div class="srf-container">
+
+<section id="srf-1">
+<div class="srf-section-head">
+<div class="srf-chip">01</div>
+<h2>架構總覽</h2>
+</div>
+<p style="color:#a6acc9;margin:0 0 12px;">用在：貫穿「訂單明細頁」與「申請退貨頁」的整條退費流程</p>
+
+<h3>各層職責</h3>
+<table>
+<thead><tr><th>層級</th><th>檔案</th><th>職責</th></tr></thead>
+<tbody>
+<tr><td>訂單明細組裝</td><td class="srf-file-path">MemberTradesOrderService.ArrangePartialQtyCancelInfo</td><td>依取消 / 退貨 / 補退資料，重新計算 TS 的實際 <code>Qty</code> 與 <code>TotalPayment</code></td></tr>
+<tr><td>部分退款金額判斷</td><td class="srf-file-path">MemberTradesOrderService.ArrangeRefund 相關方法</td><td>計算 <code>PartialRefundAmount</code>、<code>TotalRefundAmount</code>，決定是否顯示退款資訊區塊</td></tr>
+<tr><td>退貨資格檢查</td><td class="srf-file-path">ReturnGoodsRequestService</td><td>檢查部分退貨是否開放、活動/加價購限制、退款資訊蒐集條件</td></tr>
+<tr><td>運費類型</td><td class="srf-file-path">ShopShippingType / ShopShippingTypeRepository</td><td>依 <code>ShopShippingTypeId</code> 取得 <code>ShopShippingType_FeeTypeDef</code>，描述商店運費規則種類</td></tr>
+<tr><td>訂單查詢組裝</td><td class="srf-file-path">GetMemberTradesOrderProcessor / GetMemberArchiveTradesOrderProcessor</td><td>撈取 TS 明細時一併帶出 <code>OrderSlaveFlowCancelQty</code>、<code>OrderSlaveFlowOrderSpreadsAmount</code> 等欄位</td></tr>
+</tbody>
+</table>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>可以把整個流程想成三層：<strong>先算「剩多少」</strong>（Qty / TotalPayment）→ <strong>再算「該退多少」</strong>（PartialRefundAmount / TotalRefundAmount）→ <strong>最後看「運費要不要動」</strong>（FeeTypeDef）。</p>
+</div>
+
+<div class="srf-card">
+<h3 style="margin-top:0;">❓ 為什麼要先算「剩多少」？</h3>
+<p>一筆訂單子單（TS）從下單到現在，中間可能<strong>已經發生過</strong>：</p>
+<ul class="srf-checklist" style="margin:8px 0;">
+<li><strong>部分數量取消</strong>（<code>OrderSlaveFlowCancelQty</code>）— 例如缺貨、使用者申請取消部分件數</li>
+<li><strong>部分退貨</strong>（<code>OrderSlaveFlowReturnGoodsQty</code>）— 商品出貨後使用者申請退貨</li>
+<li><strong>補退價差</strong>（<code>OrderSlaveFlowOrderSpreadsAmount</code>）— 換規格、活動重新計算導致的正負金額調整</li>
+</ul>
+<p>這些事件可能只發生一種，也可能<strong>先後疊加</strong>發生（例如先取消 1 件、出貨後又退貨 1 件）。但資料庫裡的 <code>Qty</code>、<code>TotalPayment</code> 存的是<strong>「最初下單當下」的原始值，不會自動反映這些後續異動</strong>。</p>
+<p>所以「先算剩多少」的意思是：<strong>拿原始下單的 Qty / TotalPayment，把已經發生過的取消、退貨、補退全部扣除或加回，還原出「現在這個當下，這筆訂單真正還剩下幾件商品、值多少錢」</strong>。這一步做完，後面才有正確的基礎去判斷「該退多少錢」——如果沒有先做這一步，數量和金額都會是錯的（沒扣掉之前已經取消/退過的部分）。</p>
+</div>
+
+<h3>案例資訊</h3>
+<div class="srf-card">
+<p><strong>訂單編號：</strong><code>MG260204P00004</code>　<strong>TS Id：</strong><code>16434</code></p>
+<p>此案例用來驗證「部分取消 + 部分退貨 + 補退款」同時存在時，實際數量與已付金額的重算結果是否正確。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 運費類型-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-2">
+<div class="srf-section-head purple">
+<div class="srf-chip">02</div>
+<h2><span class="srf-tag purple">運費規則</span> ShopShippingType_FeeTypeDef</h2>
+</div>
+<p style="color:#a6acc9;margin:0 0 12px;">用在：訂單明細頁「運費退款資訊」區塊，決定要不要顯示 / 要不要連動處理運費</p>
+
+<p>訂單子單（<code>orderSlave</code>）上帶有 <code>ShopShippingTypeId</code>，透過此 Id 可對應到商店設定的 <code>ShopShippingType_FeeTypeDef</code>，用來標示這筆訂單當初適用的運費計算規則。退貨/退費流程在判斷「運費是否需要一併退還」、「是否因退貨導致低於免運門檻」時，會需要參考這個欄位。</p>
+
+<table>
+<thead><tr><th>值</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td><code>Fixed</code></td><td>固定運費：不論金額或重量，收取固定運費</td></tr>
+<tr><td><code>Free</code></td><td>免運費：全店/該商品一律免運</td></tr>
+<tr><td><code>OverPrice</code></td><td>滿額免運：訂單金額達到門檻即免運，退貨後若金額低於門檻需另行處理運費補收/退還</td></tr>
+<tr><td><code>PriceRule</code></td><td>多階運費：依訂單金額區間套用不同運費</td></tr>
+<tr><td><code>WeightBilling</code></td><td>重量計費：依商品總重量計算運費</td></tr>
+</tbody>
+</table>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p><strong>運費是掛在「整張訂單」身上，不是每筆退貨商品各自帶運費。</strong>一張訂單通常有很多筆 TS（每個商品一筆），但運費只收一次，會「依附」在其中<strong>某一筆特定的 TS</strong> 上（不保證一定是第一筆）。所以要判斷運費退款狀態時，得先用<strong>訂單主單編號（tmCode）</strong>呼叫 <code>csp_GetSalesOrderFeeTradesOrderSlaveCode</code>，才能查出「這張訂單的運費到底掛在哪一筆 TS」；找到那筆 TS 後，再去確認它有沒有一張 <code>RefundRequest_SourceDef == SalesOrderFee</code> 的退款單，藉此決定畫面要不要顯示運費退款資訊。</p>
+</div>
+
+<h3>運費退款判斷流程（4 步驟）</h3>
+<div class="srf-steps">
+<div class="srf-stepcard">
+<div class="srf-stepnum">1</div>
+<div class="srf-step-title">觸發退貨 / 取消</div>
+<p>使用者對某張訂單（TM，例如 <code>MG260204P00004</code>）申請退貨或取消。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">2</div>
+<div class="srf-step-title">拿「訂單」找「運費掛在哪」</div>
+<p>用訂單主單編號呼叫 <code>csp_GetSalesOrderFeeTradesOrderSlaveCode</code>，回傳「運費實際掛在哪一筆 TS」。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">3</div>
+<div class="srf-step-title">查那筆 TS 有沒有運費退款單</div>
+<p>用上一步找到的 TS Code，查 <code>RefundRequest</code> 表是否存在 <code>SourceDef == SalesOrderFee</code> 的退款單。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">4</div>
+<div class="srf-step-title">決定畫面顯示</div>
+<p>有 → 顯示「運費退款資訊」區塊；沒有 → 不顯示。</p>
+</div>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab Qty／TotalPayment計算-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-3">
+<div class="srf-section-head ok">
+<div class="srf-chip">03</div>
+<h2><span class="srf-tag ok">核心公式</span> Qty 與 TotalPayment 重算</h2>
+</div>
+<p style="color:#a6acc9;margin:0 0 12px;">用在：會員「訂單明細頁」商品清單的數量／金額欄位</p>
+
+<p>訂單明細載入後，<code>MemberTradesOrderService.ArrangePartialQtyCancelInfo</code> 會針對每一筆 <code>TradesOrderSlave</code>（TS），把「原始購買數量／金額」扣掉「取消」「退貨」，再加回「補退款價差」，得到目前真正生效的數量與金額。</p>
+
+<pre class="srf-pre" data-lang="C#"><span class="cm">//// 實際Qty為一開始購買的Qty 扣除 取消的Qty，退貨的Qty</span>
+entity.Qty = entity.Qty - entity.OrderSlaveFlowCancelQty - entity.OrderSlaveFlowReturnGoodsQty;
+<span class="cm">//// 補退單為正數，取消金額、退款金額為負數，扣除之後便為實際付款金額</span>
+entity.TotalPayment = entity.TotalPayment - entity.OrderSlaveFlowCancelTotalPayment - entity.OrderSlaveFlowReturnGoodsTotalPayment +
+                      entity.OrderSlaveFlowOrderSpreadsAmount; <span class="cm">//// 補退金額</span></pre>
+
+<h3>欄位定義</h3>
+<table>
+<thead><tr><th>欄位</th><th>意義</th><th>對「實際金額」的影響</th></tr></thead>
+<tbody>
+<tr><td><code>Qty</code></td><td>TS 原始購買數量（DB 原值）</td><td>計算基準</td></tr>
+<tr><td><code>OrderSlaveFlowCancelQty</code></td><td>已取消的數量</td><td>正數（相減）</td></tr>
+<tr><td><code>OrderSlaveFlowReturnGoodsQty</code></td><td>已退貨的數量</td><td>正數（相減）</td></tr>
+<tr><td><code>TotalPayment</code></td><td>TS 原始應付金額（DB 原值）</td><td>計算基準</td></tr>
+<tr><td><code>OrderSlaveFlowCancelTotalPayment</code></td><td>取消對應金額</td><td>讓「實際」<strong>變少</strong>（扣除已取消部分）</td></tr>
+<tr><td><code>OrderSlaveFlowReturnGoodsTotalPayment</code></td><td>退貨對應金額</td><td>讓「實際」<strong>變少</strong>（扣除已退貨部分）</td></tr>
+<tr><td><code>OrderSlaveFlowOrderSpreadsAmount</code></td><td>補退款價差（改規格/活動重算）</td><td>補收為正 → 讓「實際」<strong>變多</strong>；退款為負 → 讓「實際」<strong>變少</strong>（唯一雙向的變數）</td></tr>
+</tbody>
+</table>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p><strong>這裡是最容易搞混、也最需要注意的地方：</strong>「相減」之後結果是變少還是變多，完全取決於 <code>CancelTotalPayment</code> / <code>ReturnGoodsTotalPayment</code> 這兩個欄位<strong>本身在資料庫裡存的是正數還是負數</strong>——而這是由另一支負責「產生取消 / 退貨事件」的程式（通常在訂單處理服務那端）寫入的，不在這支重算程式裡，無法只看這行公式就完全確定。<br><br>但依照「取消 / 退貨後，金額理論上應該要變少」這個業務常理反推：這兩個欄位<strong>正常情況下應該以正數（代表取消/退貨對應的金額）代入運算</strong>，這樣公式才會是「真的在扣錢」，邏輯才會跟 <code>Qty</code> 公式（<code>Qty − CancelQty − ReturnGoodsQty</code>，同樣是正數相減）一致。</p>
+</div>
+
+<div class="srf-callout ok">
+<span class="srf-icon">✅</span>
+<p><strong>計算後的 <code>Qty</code> / <code>TotalPayment</code></strong> 即為「目前這筆 TS 實際生效（未取消、未退貨）的數量與已付金額」，會顯示在會員訂單明細頁，也作為後續退款金額計算的基礎。</p>
+</div>
+
+<h3>範例試算（純取消 + 退貨，無補退價差）</h3>
+<div class="srf-card">
+<p>原始 <code>Qty = 3</code>，<code>TotalPayment = 900</code>（單價 300）；取消 1 件（<code>CancelQty=1</code>，對應金額 <code>300</code>），退貨 1 件（<code>ReturnGoodsQty=1</code>，對應金額 <code>300</code>），此情境沒有補退價差：</p>
+<pre class="srf-pre" data-lang="計算">Qty = 3 - 1 - 1 = 1  <span class="cm">// 剩 1 件仍有效</span>
+TotalPayment = 900 - 300 - 300 + 0
+             = 300  <span class="cm">// 剩下 1 件應付 300 元，符合直覺：變少了</span></pre>
+</div>
+
+<h3>範例試算（加上補退價差）</h3>
+<div class="srf-card">
+<p>承上例，若這 1 件剩餘商品因活動重新計算，須<strong>額外補收</strong> <code>50</code> 元（<code>OrderSpreadsAmount = +50</code>）：</p>
+<pre class="srf-pre" data-lang="計算">TotalPayment = 900 - 300 - 300 + 50
+             = 350  <span class="cm">// 因為有補收價差，才會比單純扣除後的 300 還要多</span></pre>
+<p>這就是為什麼補退價差是「唯一可能讓實際金額超過『扣除取消退貨後』數字」的變數——因為它代表另一筆獨立的加價或退款事件，跟單純的取消/退貨方向不一定相同。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 部分退款金額-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-4">
+<div class="srf-section-head warn">
+<div class="srf-chip">04</div>
+<h2><span class="srf-tag warn">退款判斷</span> PartialRefundAmount / TotalRefundAmount</h2>
+</div>
+<p style="color:#a6acc9;margin:0 0 12px;">用在：會員「訂單明細頁」顯示退款金額欄位</p>
+
+<p>這個章節算出來的數字，就是<strong>使用者在「會員中心 → 訂單明細」頁面上看到的退款金額欄位</strong>。因為退貨從「使用者申請」到「退款單正式產生」中間有一段流程時間差，畫面不可能讓使用者等到流程跑完才顯示金額，所以系統依「退款單是否已經正式產生」分成兩種情境，決定當下要顯示哪一個數字：</p>
+
+<div class="srf-summary-grid">
+<div class="srf-box trait">
+<h4>🕒 情境一：申請後、退款單還沒產生</h4>
+<p>後端還在跑審核/驗退/ERP 產單流程，資料庫還沒有正式的 <code>RefundRequest</code>。畫面改用 <strong><code>PartialRefundAmount</code>（估算值）</strong>，先讓使用者知道大概能拿回多少錢。</p>
+</div>
+<div class="srf-box fix">
+<h4>✅ 情境二：退款單已正式產生</h4>
+<p>系統已經有真正的退款紀錄（甚至可能已退款完成）。畫面改用 <strong><code>TotalRefundAmount</code>（真實值）</strong>，直接取退款單上的實際金額，比估算值更準確。</p>
+</div>
+<div class="srf-box risk">
+<h4>🔄 顯示邏輯</h4>
+<p>同一個「退款金額」欄位，會依當下有沒有退款單，自動在這兩個數字之間切換，對使用者來說永遠只看到一個「目前最準確」的金額。</p>
+</div>
+</div>
+
+<p>除了重算 Qty / TotalPayment，訂單明細還需要判斷「這筆 TS 是否存在部分退款」，並算出對應金額顯示給使用者。判斷依據有兩個旗標：</p>
+
+<div class="srf-flow">
+<span class="srf-step">IsExistsOrderSpreadAmount</span>
+<span class="srf-arrow">或</span>
+<span class="srf-step">IsExistsPartialQtyCancel</span>
+<span class="srf-arrow">→</span>
+<span class="srf-step cond">計算 PartialRefundAmount</span>
+</div>
+
+<pre class="srf-pre" data-lang="C#"><span class="cm">//// 是否存在補退價差（負數代表需要退款）</span>
+ts.IsExistsOrderSpreadAmount = ts.OrderSlaveFlowOrderSpreadsAmount < 0;
+<span class="cm">//// 是否為 TS 數量部分取消（取消數量 &gt; 0 且小於購買數量）</span>
+ts.IsExistsPartialQtyCancel = this.IsPartialQtyCancel(ts.OrderSlaveFlowCancelQty, ts.Qty);
+<span class="cm">//// 判斷是否有部分取消(TS 部分數量取消或是補退)，有的話要計算部分取消金額 (不需管退款單)</span>
+if (ts.IsExistsOrderSpreadAmount || ts.IsExistsPartialQtyCancel)
+{
+    ts.PartialRefundAmount = -1 * (ts.OrderSlaveFlowCancelTotalPayment) + ts.OrderSlaveFlowOrderSpreadsAmount;
+}
+<span class="cm">//// 有實際退款單時，改用退款單金額加總作為總退款金額（排除運費退款單）</span>
+ts.TotalRefundAmount = -1 * tsRefundListExceptSalesOrderFee.Sum(x => x.RefundRequest_Amount);</pre>
+
+<h3><code>IsPartialQtyCancel</code> 判斷邏輯</h3>
+<pre class="srf-pre" data-lang="C#"><span class="kw">public</span> <span class="kw">bool</span> <span class="fn">IsPartialQtyCancel</span>(<span class="type">decimal</span> orderSlaveFlowCancelQty, <span class="type">decimal</span> qty)
+{
+    <span class="kw">if</span> (orderSlaveFlowCancelQty == 0)
+    {
+        <span class="kw">return</span> <span class="kw">false</span>; <span class="cm">// 完全沒取消，不算部分取消</span>
+    }
+    <span class="kw">if</span> (qty &gt; orderSlaveFlowCancelQty)
+    {
+        <span class="kw">return</span> <span class="kw">true</span>; <span class="cm">// 取消數量小於購買數量 → 為部分取消</span>
+    }
+    <span class="cm">// qty &lt;= 取消數量 → 視為全部取消，非「部分」</span>
+    ...
+}</pre>
+
+<div class="srf-summary-grid">
+<div class="srf-box trait">
+<h4>PartialRefundAmount</h4>
+<p>依「取消金額 + 補退價差」推算的部分退款金額，<strong>不需要有實際退款單</strong>即可顯示，用於 UI 上先行提示金額。</p>
+</div>
+<div class="srf-box risk">
+<h4>TotalRefundAmount</h4>
+<p>當已產生退款單時，改採退款單（<code>RefundRequest</code>）實際金額加總，排除運費類退款單，數字更貼近真實退款結果。</p>
+</div>
+<div class="srf-box fix">
+<h4>運費退款</h4>
+<p>另外獨立以 <code>csp_GetSalesOrderFeeTradesOrderSlaveCode</code> 找出運費掛載的 TS，比對 <code>SourceDef == SalesOrderFee</code> 的退款單，計算 <code>totalSalesOrderFee</code> 並決定是否顯示運費退款區塊。</p>
+</div>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 部分退貨開放判斷-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-5">
+<div class="srf-section-head purple">
+<div class="srf-chip">05</div>
+<h2><span class="srf-tag purple">前置檢查</span> 是否允許部分退貨</h2>
+</div>
+<p style="color:#a6acc9;margin:0 0 12px;">用在：使用者「申請退貨」頁面勾選商品時的前置檢查</p>
+
+<p>在計算退費金額之前，<code>ReturnGoodsRequestService</code> 會先確認商店是否開放「部分退貨」，此設定即文件中提到的 <code>detail.IsPartialReturnGoodsEnabled</code>。</p>
+
+<div class="srf-steps">
+<div class="srf-stepcard">
+<div class="srf-stepnum">1</div>
+<div class="srf-step-title">讀取商店設定</div>
+<p><code>ArrangeShopPartialSetting</code> 將後台設定的 <code>shopPartialSetting.IsPartialReturnGoodsEnabled</code> 帶入 <code>detail.IsPartialReturnGoodsEnabled</code>。</p>
+</div>
+<div class="srf-stepcard cond">
+<div class="srf-stepnum">2</div>
+<div class="srf-step-title">若商店本身開放部分退貨</div>
+<p><code>ValidatePartialReturn</code> 直接 <code>return</code>，不再檢查活動/加價購限制，允許使用者自由勾選要退貨的商品子單。</p>
+</div>
+<div class="srf-stepcard cond">
+<div class="srf-stepnum">3</div>
+<div class="srf-step-title">商店未開放時的例外規則</div>
+<p>若訂單含活動（<code>HasActivity</code>）或加價購（<code>HasPurchaseExtra</code>），且非所有商品都允許部分退（<code>HasPartialReturn</code>），則必須連同「不可部分退」的必退商品一起勾選，否則丟出例外「不允許部分退貨」。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">4</div>
+<div class="srf-step-title">未攤提活動檢查</div>
+<p>對於未攤提到所有商品的活動（例如第 N 件折扣），會額外呼叫 <code>CheckTradesOrderSlaveWithUnAllocatePromotionEngine</code> 驗證勾選組合是否合法。</p>
+</div>
+</div>
+
+<div class="srf-callout danger">
+<span class="srf-icon">🚫</span>
+<p>禮物卡另有獨立限制：<code>confirmEntity.IsPartialReturnBlockedByGiftCard()</code> 為 true 時，直接禁止部分退貨，優先於其他所有判斷。</p>
+</div>
+
+<div class="srf-card" style="border-left:4px solid #ff6b6b;margin-top:26px;">
+<h3 style="margin-top:0;">🤔 商業原因：商家為什麼會不允許部分退貨？</h3>
+<p>這些檢查不是技術上做不到，而是背後有實際的商業/會計考量：</p>
+<div class="srf-summary-grid">
+<div class="srf-box trait">
+<h4>🎁 促銷活動資格</h4>
+<p>「滿 3 件 8 折」「買 2 送 1」這類優惠是依「整組」計算的。只退掉其中 1 件，剩下商品就不再符合門檻，商家得重新拆算折扣、追回多給的優惠，計算複雜又易出錯，乾脆規定要退就整組一起退。</p>
+</div>
+<div class="srf-box trait">
+<h4>🛍️ 加價購綁定主商品</h4>
+<p>加價購商品是「因為買了主商品才用特價買到」。主商品退了、加價購商品卻留著，等於使用者用特價買到一個不該單獨享優惠的商品，所以主商品退貨時必須連同加價購一起退。</p>
+</div>
+<div class="srf-box trait">
+<h4>📦 組合包 / 套裝定價</h4>
+<p>套裝商品是用「整組」價格販售的，拆開單獨退貨會讓剩下商品的「單價」失去依據，退款金額該算多少容易產生爭議。</p>
+</div>
+<div class="srf-box fix">
+<h4>🎟️ 禮物卡法規 / 防詐考量</h4>
+<p>多數地區法規對禮物卡退換較嚴格（通常不可退現金），加上部分退貨可能被利用來反覆套現，商家索性直接禁止禮物卡部分退貨。</p>
+</div>
+<div class="srf-box fix">
+<h4>⚙️ 商家系統 / 營運能力</h4>
+<p>部分退貨需要額外的驗貨、拆單、重開發票等作業，系統或人力有限的商店，寧可用「全部退或都不退」的簡單政策降低出錯與客服成本——這就是最上層開關 <code>IsPartialReturnGoodsEnabled</code> 的由來。</p>
+</div>
+<div class="srf-box risk">
+<h4>💡 一句話總結</h4>
+<p>只要退貨會打亂「已核算好的優惠、套裝定價、法規限制」，或增加商家作業成本，商家就傾向禁止部分退貨、要求整筆一起處理。</p>
+</div>
+</div>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 四張表的關係-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-6">
+<div class="srf-section-head purple">
+<div class="srf-chip">06</div>
+<h2><span class="srf-tag purple">資料鏈</span> 四張表的關係</h2>
+</div>
+<p style="color:#a6acc9;margin:0 0 12px;">用在：串起「訂單商品」→「退貨申請」→「ERP 退貨處理」→「退款」的整條資料鏈</p>
+
+<p>前面幾個章節提到的所有欄位（<code>OrderSlaveFlowCancelQty</code>、<code>OrderSlaveFlowReturnGoodsTotalPayment</code>…），其實都是同一張「流程表」上的欄位。這張表叫 <code>OrderSlaveFlow</code>，它才是真正把 <code>TradesOrderSlave</code>、<code>ReturnGoodsRequest</code>、<code>ReturnGoodsOrderSlave</code>、<code>RefundRequest</code> 這四張表串在一起的「樞紐（Hub）」。以下依實際程式碼逐一拆解。</p>
+
+<table>
+<thead><tr><th>資料表</th><th>白話角色</th><th>所在資料庫</th></tr></thead>
+<tbody>
+<tr><td><code>TradesOrderSlave</code>（TS）</td><td>訂單裡的「一筆商品子單」，退費計算的最小單位</td><td>WebStore DB</td></tr>
+<tr><td><code>OrderSlaveFlow</code></td><td>每筆 TS 專屬的「狀態與流程紀錄表」，本身<strong>沒有業務金額</strong>，但存了所有指向其他三張表的關聯 Id</td><td>WebStore DB</td></tr>
+<tr><td><code>ReturnGoodsRequest</code></td><td>使用者在<strong>前台按下「申請退貨」</strong>當下產生的紀錄，代表「使用者申請了什麼」</td><td>WebStore DB</td></tr>
+<tr><td><code>ReturnGoodsOrderSlave</code></td><td>申請單被<strong>轉入 ERP</strong> 後，倉庫/供應商實際處理退貨的明細，代表「貨真的怎麼被驗退、誰負責」</td><td>ERP DB</td></tr>
+<tr><td><code>RefundRequest</code></td><td>不論是取消、退貨、運費、逾期未領，只要有錢要退，最終都會落地成一筆<strong>退款單</strong>，代表「錢實際退了多少、退去哪」</td><td>ERP DB</td></tr>
+</tbody>
+</table>
+
+<h3>關聯欄位實際長什麼樣子（程式碼實證）</h3>
+<p>直接看 <code>OrderSlaveFlow.cs</code> 這張表的欄位定義，可以清楚看到它同時持有「退貨申請」跟「ERP 退貨明細」兩邊的關聯 Id 與狀態鏡像：</p>
+
+<pre class="srf-pre" data-lang="C#"><span class="cm">// 指向 WebStore.ReturnGoodsRequest（使用者申請的那筆）</span>
+<span class="kw">public</span> Nullable&lt;<span class="type">long</span>&gt; OrderSlaveFlow_ReturnGoodsRequestId { <span class="kw">get</span>; <span class="kw">set</span>; }
+<span class="kw">public</span> <span class="type">string</span> OrderSlaveFlow_ReturnGoodsRequestStatusDef { <span class="kw">get</span>; <span class="kw">set</span>; }
+<span class="cm">// 指向 ERP.ReturnGoodsOrderSlave（ERP 實際處理退貨的那筆）</span>
+<span class="kw">public</span> Nullable&lt;<span class="type">long</span>&gt; OrderSlaveFlow_ReturnGoodsOrderSlaveId { <span class="kw">get</span>; <span class="kw">set</span>; }
+<span class="kw">public</span> <span class="type">string</span> OrderSlaveFlow_ReturnGoodsOrderSlaveStatusDef { <span class="kw">get</span>; <span class="kw">set</span>; }
+<span class="cm">// 退貨數量／金額，就是前面幾章一直用到的欄位</span>
+<span class="kw">public</span> <span class="type">short</span> OrderSlaveFlow_ReturnGoodsQty { <span class="kw">get</span>; <span class="kw">set</span>; }
+<span class="kw">public</span> <span class="type">decimal</span> OrderSlaveFlow_ReturnGoodsTotalPayment { <span class="kw">get</span>; <span class="kw">set</span>; }</pre>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>重點：<code>OrderSlaveFlow</code> 跟 <code>TradesOrderSlave</code> 是 <strong>1 對 1</strong>（透過 <code>OrderSlaveFlow_TradesOrderSlaveId</code>），但它同時「認識」<code>ReturnGoodsRequest</code> 跟 <code>ReturnGoodsOrderSlave</code> 各自的 Id——因為這兩張表分屬不同資料庫（WebStore／ERP），彼此不能直接下 SQL JOIN，所以都要繞道 <code>OrderSlaveFlow</code> 才查得到彼此。</p>
+</div>
+
+<h3>實際寫入時序（來自 <code>ReturnGoodsRequestRepository.CreateReturnGoodsRequest</code>）</h3>
+<p>使用者在前台按下「送出退貨申請」時，程式碼實際執行的兩個步驟如下（節錄自 <code>WebStore/DA/WebStoreDBV2/Repositories/ReturnGoodsRequestRepository.cs</code>）：</p>
+
+<pre class="srf-pre" data-lang="C#"><span class="cm">// 1. 建立退貨申請單</span>
+<span class="kw">foreach</span> (var request <span class="kw">in</span> insertedList)
+{
+    context.ReturnGoodsRequest.<span class="fn">Add</span>(request);
+}
+context.<span class="fn">SaveChanges</span>();
+<span class="cm">// 2. 回填 OrderSlaveFlow：把剛剛新增的 ReturnGoodsRequest_Id 寫回這筆 TS 的流程表</span>
+flow.OrderSlaveFlow_ReturnGoodsRequestId <span class="kw">=</span> request.ReturnGoodsRequest_Id;
+flow.OrderSlaveFlow_ReturnGoodsRequestStatusDef <span class="kw">=</span> ReturnGoodsRequestStatusEnum.WaitingToTrans.<span class="fn">ToString</span>()<span class="cm">; // 待轉單</span>
+flow.OrderSlaveFlow_StatusDef <span class="kw">=</span> MemberTradesOrderOrderSlaveFlowStatusEnum.ReturnGoodsRequesting.<span class="fn">ToString</span>();
+flow.OrderSlaveFlow_CanCancel <span class="kw">=</span> <span class="kw">false</span>; <span class="cm">// 申請退貨後，這筆 TS 就不能再取消了</span></pre>
+
+<div class="srf-steps">
+<div class="srf-stepcard">
+<div class="srf-stepnum">1</div>
+<div class="srf-step-title">使用者按下「申請退貨」</div>
+<p>新增一筆 <code>ReturnGoodsRequest</code>（WebStore DB），記錄退貨原因、數量、退款帳戶等使用者填的資訊。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">2</div>
+<div class="srf-step-title">回填 OrderSlaveFlow</div>
+<p>把新增的 <code>ReturnGoodsRequest_Id</code> 寫回這筆 TS 對應的 <code>OrderSlaveFlow</code>，狀態設為「待轉單（WaitingToTrans）」，同時把 <code>CanCancel</code> 等操作旗標關閉，避免使用者同時申請取消。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">3</div>
+<div class="srf-step-title">轉單至 ERP</div>
+<p>背景排程/服務把「待轉單」的申請轉進 ERP，ERP 端建立正式的 <code>ReturnGoodsOrderSlave</code>（實際驗退、供應商處理的明細），並把它的 Id 回填到同一筆 <code>OrderSlaveFlow_ReturnGoodsOrderSlaveId</code>。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">4</div>
+<div class="srf-step-title">ERP 驗退完成 → 產生退款單</div>
+<p>ERP 確認退貨完成後，建立一筆 <code>RefundRequest</code>，用 <code>RefundRequest_TradesOrderSlaveCode</code> 對應回同一筆 TS，並將 <code>RefundRequest_SourceDef</code> 標記為 <code>ReturnGoodsOrderSlave</code>，代表「這筆退款是因為退貨事件產生的」。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">5</div>
+<div class="srf-step-title">前台顯示真實退款金額</div>
+<p>訂單明細頁偵測到這筆 TS 已經有 <code>RefundRequest</code>，就改用第 4 章介紹的 <code>TotalRefundAmount</code>（退款單真實金額）取代原本的估算值 <code>PartialRefundAmount</code>。</p>
+</div>
+</div>
+
+<h3>RefundRequest 的來源類型（<code>RefundRequestSourceDefEnum</code>）</h3>
+<p>退款單不是只因為「退貨」才會產生，程式碼裡定義了 5 種來源，退貨只是其中之一：</p>
+<table>
+<thead><tr><th>SourceDef</th><th>意義</th></tr></thead>
+<tbody>
+<tr><td><code>CancelOrderSlave</code></td><td>取消子單產生的退款</td></tr>
+<tr><td><code>ReturnGoodsOrderSlave</code></td><td><strong>退貨子單</strong>產生的退款（本章討論的主角）</td></tr>
+<tr><td><code>SalesOrderFee</code></td><td>運費退款（見第 2 章）</td></tr>
+<tr><td><code>SalesOrderSlave</code></td><td>逾期未領退款</td></tr>
+<tr><td><code>RechargeReceipt</code></td><td>訂單差價調整退款</td></tr>
+</tbody>
+</table>
+
+<h3>一張圖看懂整條鏈</h3>
+<div class="srf-flow">
+<span class="srf-step">TradesOrderSlave<br><small>（商品子單）</small></span>
+<span class="srf-arrow">→</span>
+<span class="srf-step cond">OrderSlaveFlow<br><small>（樞紐，1:1 對應 TS）</small></span>
+<span class="srf-arrow">→</span>
+<span class="srf-step">ReturnGoodsRequest<br><small>（使用者申請）</small></span>
+<span class="srf-arrow">→</span>
+<span class="srf-step">ReturnGoodsOrderSlave<br><small>（ERP 驗退明細）</small></span>
+<span class="srf-arrow">→</span>
+<span class="srf-step cond">RefundRequest<br><small>（實際退款單）</small></span>
+</div>
+
+<div class="srf-callout ok">
+<span class="srf-icon">✅</span>
+<p><strong>一句話總結：</strong><code>TradesOrderSlave</code> 是「退什麼商品」，<code>OrderSlaveFlow</code> 是「串起一切的樞紐」，<code>ReturnGoodsRequest</code> 是「使用者說要退」，<code>ReturnGoodsOrderSlave</code> 是「ERP 實際處理退貨」，<code>RefundRequest</code> 是「錢真的退了多少」——四張表依序記錄同一件退貨事件在不同階段、不同系統裡的樣貌。</p>
+</div>
+
+<h3>🔁 補充：同一筆 TG，退貨/取消是怎麼「同步」到 ERP 的？</h3>
+<p style="color:#a6acc9;">用在：解釋「為什麼我申請退貨後，訂單頁狀態不是馬上變、而是要等一下」——這一段是 WebStore ↔ ERP 兩個資料庫之間，真正負責「搬資料」的排程機制。</p>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p><strong>關鍵認知：同步的最小單位不是「這一筆退貨」，而是「整個 TG（訂單群組）裡所有狀態為待轉單的 TS」。</strong>排程會一次掃描整個資料庫裡所有「待轉單」的 <code>CancelRequest</code> 與 <code>ReturnGoodsRequest</code>，不是只針對你剛剛送出的那一筆。</p>
+</div>
+
+<div class="srf-steps">
+<div class="srf-stepcard">
+<div class="srf-stepnum">1</div>
+<div class="srf-step-title">使用者送出退貨/取消申請</div>
+<p>WebStore DB 寫入 <code>ReturnGoodsRequest</code>（或 <code>CancelRequest</code>），並把對應的 <code>OrderSlaveFlow</code> 狀態改為 <code>WaitingToTrans</code>（待轉單）。這一步只發生在 WebStore DB，ERP 還完全不知道這件事。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">2</div>
+<div class="srf-step-title">排程 Job 定期掃描（NMQV2_ImportWebStoreDBRequestDataToERPDB）</div>
+<p>這是一支實際存在的 SQL Server Agent Job，核心動作是呼叫 <code>ERPDB.dbo.csp_ImportWebStoreDBRequestDataToERPDB</code>，透過 Linked Server 把 WebStoreDB 裡所有 <code>ReturnGoodsRequest_StatusDef = 'WaitingToTrans'</code> 和 <code>CancelRequest_StatusDef = 'WaitingToTrans'</code> 的資料，整批 <code>INSERT</code> 進 ERPDB 對應的 <code>ReturnGoodsRequest</code> / <code>CancelRequest</code> 表，並回寫 WebStoreDB 的 <code>OrderSlaveFlow</code>。</p>
+<pre class="srf-pre" data-lang="SQL"><span class="cm">-- csp_ImportWebStoreDBRequestDataToERPDB.sql（節錄邏輯）</span>
+<span class="kw">SELECT</span> ...
+<span class="kw">FROM</span> <span class="type">[WebStoreDB].[dbo].[ReturnGoodsRequest]</span>
+<span class="kw">WHERE</span> <span class="fn">ReturnGoodsRequest_StatusDef</span> = <span class="type">'WaitingToTrans'</span>;
+<span class="cm">-- 整批寫入 ERPDB，並回填 OrderSlaveFlow 狀態</span>
+<span class="kw">INSERT INTO</span> <span class="type">[dbo].[ReturnGoodsRequest]</span> (...)</pre>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">3</div>
+<div class="srf-step-title">同一支 Job 再掃描「所有待轉單」，逐筆丟給 NMQV2 非同步佇列</div>
+<p>Job 接著會查詢 ERPDB 裡所有 <code>ReturnGoodsRequest_StatusDef = 'WaitingToTrans'</code>（取消單同理）的資料——<strong>注意這裡查的是「全庫」，不是限定某個 TG</strong>——把每一筆的 <code>ReturnGoodsRequest_Id</code> 個別包成一個 <code>Task</code>，塞進 <code>NMQV2DB.dbo.Task</code> 表，指定要交給 <code>ReturnGoodsOrderBatchInsert</code>（退貨）或 <code>CancelOrderProcess</code>（取消）這兩支背景 Worker 處理。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">4</div>
+<div class="srf-step-title">NMQV2 Worker 消化 Task，正式在 ERP 產生 ReturnGoodsOrderSlave 與 RefundRequest</div>
+<p>這一步的實作是獨立的 ERP 端 Worker 服務（不在本 mweb repo 內，屬於 ERP 系統程式碼），依 Task 內容把退貨單轉成正式的驗退明細 <code>ReturnGoodsOrderSlave</code>，並視付款方式產生 <code>RefundRequest</code>（<code>RefundRequest_SourceDef = ReturnGoodsOrderSlave</code>）。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">5</div>
+<div class="srf-step-title">ERP 處理完成後，狀態同步「寫回」WebStoreDB</div>
+<p>透過 <code>csp_SyncERPDBReturnGoodsRequestStatusToWebStoreDB</code>，把 ERPDB 端 <code>ReturnGoodsRequest</code> 最新的狀態（<code>StatusDef</code>、<code>IsClosed</code> 等）透過 Linked Server 寫回 WebStoreDB 同一張表的同一筆資料，前台訂單頁下次查詢時就能看到最新狀態。</p>
+</div>
+</div>
+
+<table>
+<thead><tr><th>階段</th><th>發生在哪裡</th><th>關鍵物件</th><th>顆粒度</th></tr></thead>
+<tbody>
+<tr><td>使用者申請</td><td>WebStoreDB</td><td><code>ReturnGoodsRequest</code> / <code>CancelRequest</code></td><td>單筆 TS</td></tr>
+<tr><td>匯入 ERPDB</td><td>WebStoreDB → ERPDB</td><td><code>csp_ImportWebStoreDBRequestDataToERPDB</code></td><td>整批（所有待轉單資料，非單一 TG）</td></tr>
+<tr><td>丟入非同步佇列</td><td>ERPDB → NMQV2DB</td><td><code>Task</code>（Job: ReturnGoodsOrderBatchInsert / CancelOrderProcess）</td><td>每筆 <code>ReturnGoodsRequest_Id</code> / <code>CancelRequest_Id</code> 各自一個 Task</td></tr>
+<tr><td>ERP 實際處理</td><td>ERP Worker（ERP 系統程式碼）</td><td><code>ReturnGoodsOrderSlave</code> / <code>RefundRequest</code></td><td>單筆 Task</td></tr>
+<tr><td>狀態寫回</td><td>ERPDB → WebStoreDB</td><td><code>csp_SyncERPDBReturnGoodsRequestStatusToWebStoreDB</code></td><td>單筆 <code>ReturnGoodsRequest_Id</code></td></tr>
+</tbody>
+</table>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p><strong>對之前「TG 觸發轉單」說法的修正：</strong>先前提到「轉單」是以整個 TG 為單位觸發，這在<strong>金流付款成功轉單</strong>（<code>TransToERPTmpV2Process</code>／<code>TransferOrderProcessor</code>）的情境下正確——那是以 <code>tradesOrderGroupId</code> 當參數觸發整個訂單的轉單。但<strong>退貨/取消</strong>走的是另一支排程（<code>csp_ImportWebStoreDBRequestDataToERPDB</code>），它是<strong>定期全庫掃描「待轉單」狀態的資料</strong>，並非以某個 TG 為觸發單位；只是實務上同一個 TG 底下的多筆退貨/取消申請，很可能剛好在同一次排程執行時一起被撈到、一起轉單，感覺上像是「整批」處理。</p>
+</div>
+
+<h3 style="margin-top:30px;">🧮 補充：3 筆 TS＋固定運費，退貨後 <code>ReturnGoodsOrderSlave</code> 會是幾筆？</h3>
+<p style="color:#a9adc1;">用在：釐清「商品退貨」與「運費退款」在資料庫裡其實是兩條平行的軌道，避免誤以為運費也會擠進 <code>ReturnGoodsOrderSlave</code> 多出一筆。</p>
+
+<div class="srf-callout ok">
+<span class="srf-icon">✅</span>
+<p><strong>結論：只會是 3 筆，不會是 4 筆。</strong>運費退款完全不經過 <code>ReturnGoodsOrderSlave</code>，它走的是另一張獨立的表：<code>SalesOrderFee</code> ＋ 對應的 <code>RefundRequest</code>。</p>
+</div>
+
+<p>原因可以從實際的資料表設計與 ERP 端 SP 邏輯直接對照出來：</p>
+
+<table>
+<thead><tr><th></th><th>商品退貨</th><th>運費退款</th></tr></thead>
+<tbody>
+<tr><td>負責的主表</td><td><code>ReturnGoodsOrderSlave</code></td><td><code>SalesOrderFee</code></td></tr>
+<tr><td>對應顆粒度</td><td>1 筆退貨的 TS = 1 筆</td><td>1 個 TG（訂單群組）通常只有 1 筆運費資料，不管底下有幾個 TS</td></tr>
+<tr><td>關鍵欄位</td><td><code>ReturnGoodsOrderSlave_TradesOrderSlaveId</code>（指向單一 TS）</td><td><code>SalesOrderFee_TradesOrderSlaveId</code>（運費實際掛載的那個 TS，可能不是第一筆）</td></tr>
+<tr><td>退款時寫入</td><td>ERP Worker 處理 Task 後產生 <code>RefundRequest_SourceDef = ReturnGoodsOrderSlave</code></td><td><code>csp_ReturnSalesOrderFee</code> 直接產生 <code>RefundRequest_SourceDef = SalesOrderFee</code></td></tr>
+</tbody>
+</table>
+
+<div class="srf-flow">
+<span class="srf-step">3 個 TS 全部退貨</span>
+<span class="srf-arrow">→</span>
+<span class="srf-step cond">ReturnGoodsOrderSlave × 3<br><small>（純商品明細，無運費欄位）</small></span>
+</div>
+<div class="srf-flow" style="margin-top:10px;">
+<span class="srf-step">同一張訂單的運費（若符合退運費規則）</span>
+<span class="srf-arrow">→</span>
+<span class="srf-step cond">RefundRequest × 1<br><small>SourceDef = SalesOrderFee</small></span>
+</div>
+
+<p>也就是說，一次「全部退貨」的動作，實際上同時觸發<strong>兩條互不相干的資料軌道</strong>：</p>
+<ul style="line-height:1.9;">
+<li><strong>商品軌道：</strong>3 筆 <code>ReturnGoodsOrderSlave</code>，一個 TS 一筆，欄位只描述商品本身（<code>Qty</code>／<code>Price</code>／<code>TotalPayment</code>／<code>TotalDiscount</code>），完全沒有運費相關欄位。</li>
+<li><strong>運費軌道：</strong>運費有自己的主表 <code>SalesOrderFee</code>，退運費是由 ERP 端 <code>csp_ReturnSalesOrderFee</code> 這支 SP 獨立處理，直接寫入一筆 <code>RefundRequest</code>（<code>SourceDef = 'SalesOrderFee'</code>，<code>SourceId</code> 指向 <code>SalesOrderFee_Id</code>），完全不會去新增或修改 <code>ReturnGoodsOrderSlave</code>。</li>
+</ul>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>這也呼應前面「運費類型定義」章節提到的：查詢運費退款狀態要用 <code>csp_GetSalesOrderFeeTradesOrderSlaveCode</code> 找出運費掛在哪個 TS、再去查 <code>RefundRequest</code>，而不是去看 <code>ReturnGoodsOrderSlave</code>——因為運費本來就不會出現在那張表裡。</p>
+</div>
+
+<h3 style="margin-top:30px;">⚠️ 補充修正：消費者按下「退貨」，運費會自動一起退嗎？</h3>
+<p style="color:#a9adc1;">用在：釐清「運費退款」的觸發者是誰——避免誤以為運費退款是退貨當下由系統自動算好、自動觸發的。</p>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p><strong>結論：不會。消費者在 mweb 申請退貨，預設只會走商品的 <code>ReturnGoodsOrderSlave</code> 流程，運費不會被自動一併退還。</strong>運費退款單（<code>RefundRequest_SourceDef = SalesOrderFee</code>）需要由客服／營運人員在 ERP 後台（SMS）另外手動建立，只有極少數的「整筆訂單全部取消」情境有系統自動化例外。</p>
+</div>
+
+<p>具體證據如下：</p>
+
+<div class="srf-steps">
+<div class="srf-stepcard">
+<div class="srf-step-title">1. 建立運費退款單的 SP（csp_ReturnSalesOrderFee）在 mweb repo 裡完全找不到呼叫入口</div>
+<p>這支 SP 帶有 <code>@userName</code>（操作人員）參數，且註解寫著「放寬客戶新增運費退款單權限」——代表它是<strong>由客服／營運人員在 ERP 後台（SMS）手動操作</strong>時才會被呼叫，並不是消費者退貨當下由 mweb 系統自動觸發的。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-step-title">2. mweb 端能找到的運費退款相關程式碼，都只是「查詢/更新已存在的運費退款單」</div>
+<p><code>RefundRequestService.cs</code> 裡與運費相關的邏輯，都是在「已經有一筆運費退款單存在」的前提下，去查詢帳戶資料或更新退款狀態——沒有任何「建立」運費退款單的邏輯。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-step-title">3. 系統唯一會自動退運費的情境，是「取消」（Cancel）的特例，且限定「整個 TM 底下的 TS 全部取消」</div>
+<p>只有在 <code>csp_BatchGeneratePaymentRequest</code> 這支付款單批次產生的 SP 裡，才會呼叫 <code>csp_GenerateCreditCardRefundRequestSalesOrderFee</code> 自動退運費，但觸發條件很嚴格：</p>
+<pre><code>-- csp_BatchGeneratePaymentRequest.sql（節錄）
+-- BTS22901 依 TG 判斷各 TM 下的所有 TS 都取消時，退運費給消費者
+EXEC [dbo].[csp_GenerateCreditCardRefundRequestSalesOrderFee] @groupId;</code></pre>
+<p>也就是說，這個自動化只服務「取消」，而且必須是同一個 TM 底下所有 TS 都被取消才會觸發；「退貨」（<code>ReturnGoodsOrderSlave</code>）完全沒有對應的自動退運費邏輯。</p>
+</div>
+</div>
+
+<table>
+<thead><tr><th>情境</th><th>運費會自動退嗎？</th><th>觸發者/機制</th></tr></thead>
+<tbody>
+<tr><td>消費者退貨（部分或全部商品）</td><td>❌ 不會</td><td>需客服／營運人員在 ERP 後台手動建立運費退款單（<code>csp_ReturnSalesOrderFee</code>）</td></tr>
+<tr><td>同一 TM 底下所有 TS 全部取消</td><td>✅ 會（僅此特例）</td><td>系統自動化，<code>csp_BatchGeneratePaymentRequest</code> → <code>csp_GenerateCreditCardRefundRequestSalesOrderFee</code></td></tr>
+<tr><td>其他一般取消／部分取消情境</td><td>❌ 不會</td><td>同退貨，需人工於後台建立</td></tr>
+</tbody>
+</table>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 總結-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-7">
+<div class="srf-section-head">
+<div class="srf-chip">07</div>
+<h2>總結：一次退費計算的完整脈絡</h2>
+</div>
+
+<ul class="srf-checklist">
+<li>先確認商店 <code>ShopShippingType_FeeTypeDef</code> 運費規則，評估退貨是否影響免運門檻／運費金額。</li>
+<li>依 <code>IsPartialReturnGoodsEnabled</code> 與活動/加價購/禮物卡限制，判斷本次是否允許「部分」退貨。</li>
+<li>透過 <code>ArrangePartialQtyCancelInfo</code> 用「原始 Qty / TotalPayment」扣除「取消、退貨」再加回「補退價差」，得到目前實際生效的數量與金額。</li>
+<li>再依 <code>OrderSlaveFlowOrderSpreadsAmount</code>、<code>IsPartialQtyCancel</code> 判斷是否存在部分退款，估算 <code>PartialRefundAmount</code>；若已有正式退款單，改以 <code>TotalRefundAmount</code>（退款單金額加總）呈現。</li>
+<li>運費退款獨立處理，透過 <code>SalesOrderFee</code> 類型退款單與 TS 對應碼另行結算。</li>
+<li>使用者申請退貨/取消後，經由 <code>OrderSlaveFlow</code> 樞紐串起 <code>ReturnGoodsRequest</code> → <code>ReturnGoodsOrderSlave</code> → <code>RefundRequest</code> 四張表，並透過排程 <code>csp_ImportWebStoreDBRequestDataToERPDB</code>（全庫掃描待轉單資料，非單一 TG）同步進 ERP，再由 NMQV2 背景 Worker 產生正式退貨明細與退款單。</li>
+</ul>
+
+<div class="srf-evidence">
+<div class="srf-evidence-head">
+<span class="srf-tag">案例</span>
+<strong>MG260204P00004 / TS 16434</strong>
+</div>
+<p>此訂單用來驗證：當同一筆 TS 同時存在部分取消數量與退貨數量時，<code>Qty</code>／<code>TotalPayment</code> 是否能正確反映「扣除取消與退貨後、且加回補退價差」的最終結果，並確保 UI 顯示的部分退款金額與後續實際退款單金額一致。</p>
+</div>
+
+</section>
+
+<footer>整理自 <code>case1-退費計算.md</code> 與 <code>MemberTradesOrderService</code> / <code>ReturnGoodsRequestService</code> 原始碼</footer>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+{% endtabs %}

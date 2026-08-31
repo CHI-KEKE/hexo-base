@@ -1,0 +1,6 @@
+#Deployment
+##https://hexo.io/docs/one-command-deployment.html
+deploy:
+  type: git
+  repo: git@github.com:allenlin000/allenlin000.github.io.githhhhhhhhhhhhhhhh
+  branch: master

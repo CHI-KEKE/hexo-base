@@ -1,0 +1,668 @@
+---
+title: Stripe 退款完整解析：DirectCharge / DestinationCharge 與 Application Fee 拆帳
+date: 2026-07-28 08:45:00
+categories: Payment
+top_img: https://raw.githubusercontent.com/CHI-KEKE/Payment/refs/heads/master/pics/stripe/refund-landing.png
+cover : https://raw.githubusercontent.com/CHI-KEKE/Payment/refs/heads/master/pics/stripe/refund-landing.png
+toc:
+toc_number:
+comments :
+tags:
+---
+
+{% tabs Stripe-Refund%}
+
+<!-- tab 概述與設計理念-->
+
+<style>
+.srf{display:block;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'PingFang TC','Microsoft JhengHei',sans-serif;background:radial-gradient(1200px 600px at 10% -10%, rgba(108,140,255,.18), transparent 60%),radial-gradient(1000px 500px at 100% 0%, rgba(79,209,140,.12), transparent 55%),#0f1220;color:#e7e9f5!important;line-height:1.7;border-radius:20px;padding:1px 0 28px;margin:0 0 20px;overflow:hidden;}
+.srf *{box-sizing:border-box;}
+.srf a{color:#6c8cff!important;text-decoration:none;}
+.srf a:hover{text-decoration:underline;}
+.srf .srf-hero{padding:48px 6vw 34px;text-align:center;position:relative;overflow:hidden;}
+.srf .srf-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg, rgba(79,209,140,.08), transparent 70%);pointer-events:none;}
+.srf .srf-eyebrow{display:inline-block;font-size:.78rem;letter-spacing:.16em;color:#4fd1c5!important;text-transform:uppercase;font-weight:700;margin-bottom:12px;}
+.srf .srf-hero h1{font-size:1.7rem;margin:0 0 12px;color:#fff!important;font-weight:800;}
+.srf .srf-hero p{color:#a6acc9!important;max-width:700px;margin:0 auto;font-size:1rem;}
+.srf .srf-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;}
+.srf .srf-badge{background:#1b2038;border:1px solid #2a3153;padding:6px 14px;border-radius:999px;font-size:.8rem;color:#a6acc9!important;}
+.srf .srf-container{padding:0 5vw;}
+.srf section{margin-bottom:44px;}
+.srf .srf-section-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.srf .srf-section-head .srf-chip{flex:none;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,#6c8cff,#8f6cff);color:#fff!important;font-size:1rem;}
+.srf .srf-section-head.ok .srf-chip{background:linear-gradient(135deg,#4fd18c,#2f9c67);}
+.srf .srf-section-head.warn .srf-chip{background:linear-gradient(135deg,#ffb454,#c97f2a);}
+.srf .srf-section-head h2{margin:0;font-size:1.3rem;font-weight:800;color:#fff!important;}
+.srf h3{font-size:1.08rem;margin:26px 0 10px;color:#fff!important;border-left:4px solid #6c8cff;padding-left:10px;}
+.srf p{color:#a6acc9!important;}
+.srf .srf-card{background:#1b2038;border:1px solid #2a3153;border-radius:14px;padding:18px 22px;margin:14px 0;}
+.srf table{width:100%;border-collapse:collapse;background:#1b2038!important;border:1px solid #2a3153;border-radius:14px;overflow:hidden;margin:14px 0 22px;font-size:.88rem;}
+.srf thead th{background:linear-gradient(90deg, rgba(108,140,255,.18), rgba(79,209,140,.12))!important;color:#fff!important;text-align:left;padding:11px 14px;font-weight:700;border-bottom:1px solid #2a3153;}
+.srf tbody td{padding:10px 14px;border-bottom:1px solid #2a3153;color:#a6acc9!important;vertical-align:top;background:#1b2038!important;}
+.srf tbody tr:last-child td{border-bottom:none;}
+.srf tbody td strong,.srf tbody td code{color:#e7e9f5!important;}
+.srf code{font-family:Consolas,'SFMono-Regular','Liberation Mono',Menlo,monospace;background:rgba(108,140,255,.16)!important;color:#c7d2ff!important;padding:2px 6px;border-radius:5px;font-size:.88em;}
+.srf pre.srf-pre{background:#0d0f1c!important;border:1px solid #2a3153;border-radius:12px;padding:16px 18px;overflow-x:auto;margin:12px 0 22px;position:relative;color:#dce1f5!important;font-size:.84rem!important;line-height:1.65!important;font-family:Consolas,'SFMono-Regular','Liberation Mono',Menlo,monospace!important;white-space:pre!important;}
+.srf pre.srf-pre::before{content:attr(data-lang);position:absolute;top:6px;right:12px;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:#a6acc9!important;font-family:'Segoe UI',sans-serif;}
+.srf .kw{color:#c792ea!important;} .srf .str{color:#c3e88d!important;} .srf .cm{color:#6b7394!important;font-style:italic;} .srf .fn{color:#82aaff!important;} .srf .type{color:#ffcb6b!important;} .srf .num{color:#f78c6c!important;}
+.srf .srf-callout{border-radius:12px;padding:14px 18px;margin:14px 0 22px;border:1px solid #2a3153;display:flex;gap:12px;}
+.srf .srf-callout .srf-icon{font-size:1.15rem;}
+.srf .srf-callout.info{background:rgba(108,140,255,.08);border-color:rgba(108,140,255,.35);}
+.srf .srf-callout.warn{background:rgba(255,180,84,.08);border-color:rgba(255,180,84,.35);}
+.srf .srf-callout.danger{background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.35);}
+.srf .srf-callout.ok{background:rgba(79,209,140,.08);border-color:rgba(79,209,140,.35);}
+.srf .srf-callout p{margin:0;color:#e7e9f5!important;}
+.srf .srf-callout strong{color:#fff!important;}
+.srf .srf-file-path{font-family:Consolas,monospace;font-size:.76rem;color:#a6acc9!important;background:#20263f!important;display:inline-block;padding:3px 10px;border-radius:6px;margin:4px 0 12px;}
+.srf .srf-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.03em;}
+.srf .srf-tag.danger{background:rgba(255,107,107,.18)!important;color:#ff6b6b!important;}
+.srf .srf-tag.ok{background:rgba(79,209,140,.18)!important;color:#4fd18c!important;}
+.srf .srf-tag.warn{background:rgba(255,180,84,.18)!important;color:#ffb454!important;}
+.srf .srf-tag.info{background:rgba(108,140,255,.18)!important;color:#6c8cff!important;}
+.srf .srf-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0 22px;}
+.srf .srf-summary-grid .srf-box{background:#1b2038;border:1px solid #2a3153;border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;}
+.srf .srf-summary-grid .srf-box::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;}
+.srf .srf-summary-grid .srf-box.trait::before{background:#6c8cff;}
+.srf .srf-summary-grid .srf-box.risk::before{background:#ffb454;}
+.srf .srf-summary-grid .srf-box.fix::before{background:#4fd18c;}
+.srf .srf-summary-grid .srf-box h4{margin:0 0 8px;color:#fff!important;font-size:.83rem;text-transform:uppercase;letter-spacing:.06em;}
+.srf .srf-summary-grid .srf-box p{margin:0;font-size:.88rem;}
+@media (max-width:780px){.srf .srf-summary-grid{grid-template-columns:1fr;}}
+.srf .srf-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 22px;}
+.srf .srf-flow .srf-step{background:#1b2038;border:1px solid #2a3153;border-radius:10px;padding:9px 14px;font-size:.84rem;color:#e7e9f5!important;}
+.srf .srf-flow .srf-step.cond{border-color:rgba(255,180,84,.5);color:#ffb454!important;background:rgba(255,180,84,.08);}
+.srf .srf-flow .srf-arrow{color:#8f6cff!important;font-size:1.05rem;}
+.srf .srf-steps{display:flex;flex-direction:column;gap:14px;margin:16px 0 22px;}
+.srf .srf-stepcard{background:#1b2038;border:1px solid #2a3153;border-radius:14px;padding:16px 20px;position:relative;padding-left:60px;}
+.srf .srf-stepcard .srf-stepnum{position:absolute;left:16px;top:16px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6c8cff,#8f6cff);color:#fff!important;font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
+.srf .srf-stepcard.cond .srf-stepnum{background:linear-gradient(135deg,#ffb454,#c97f2a);}
+.srf .srf-stepcard .srf-step-title{font-weight:700;color:#fff!important;font-size:1rem;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.srf .srf-stepcard p{margin:6px 0;font-size:.9rem;}
+.srf .srf-checklist{list-style:none;padding:0;margin:14px 0;}
+.srf .srf-checklist li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;color:#a6acc9!important;}
+.srf .srf-checklist li::before{content:"✓";flex:none;width:18px;height:18px;border-radius:6px;background:rgba(79,209,140,.18);color:#4fd18c!important;font-size:.72rem;display:flex;align-items:center;justify-content:center;margin-top:2px;font-weight:700;}
+.srf .srf-evidence{border:1px solid rgba(108,140,255,.35);background:linear-gradient(135deg, rgba(108,140,255,.06), rgba(79,209,140,.03));border-radius:14px;padding:18px 20px;margin:16px 0 22px;}
+.srf .srf-evidence .srf-evidence-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.srf .srf-evidence .srf-evidence-head .srf-tag{background:#6c8cff!important;color:#fff!important;}
+.srf footer{text-align:center;padding:30px 5vw 6px;color:#a6acc9!important;font-size:.82rem;border-top:1px solid #2a3153;margin-top:8px;}
+@media (max-width:680px){.srf .srf-summary-grid{grid-template-columns:1fr;}}
+</style>
+
+<div class="srf">
+<div class="srf-hero">
+<span class="srf-eyebrow">Payment · Stripe · 退款機制</span>
+</div>
+<div class="srf-container">
+
+<section id="srf-1">
+<div class="srf-section-head">
+<div class="srf-chip">01</div>
+<h2>概述與設計理念</h2>
+</div>
+
+<p>Stripe Plugin 沒有實作 <code>IRefundQueryable</code>，<code>POST /v1/refunds</code> 成功，Stripe 就直接回傳最終結果（<code>succeeded</code>），PMW 不需要像 Cybersource 一樣額外輪詢退款狀態，退款這一步在 Stripe 這邊是同步就能拿到結果的。</p>
+
+<p>但 Stripe 的退款並不是單純「打一支 API 退錢」這麼簡單。因為 Stripe Connect 架構下有子帳號拆帳（DirectCharge / DestinationCharge）與平台手續費（Application Fee）兩個維度要同時考慮，退款時必須依照付款當初的資金流向，反向把每一筆錢退回正確的帳號，最多需要串接 4 個 API 呼叫。</p>
+
+<div class="srf-summary-grid">
+<div class="srf-box trait">
+<h4>🔷 特性</h4>
+<p>Stripe 退款無需輪詢，<code>POST /v1/refunds</code> 一次呼叫即為終態；但依 PaymentFlow 與是否退手續費，實際串接的 API 數量會在 2～4 支之間變動。</p>
+</div>
+<div class="srf-box risk">
+<h4>⚠️ 複雜度來源</h4>
+<p>DirectCharge／DestinationCharge 決定退款要在子帳號或主帳號執行；Application Fee 是否退還則是獨立於資金流向之外的第二個條件判斷。</p>
+</div>
+<div class="srf-box fix">
+<h4>🎯 核心原則</h4>
+<p>退款永遠先反查 <code>PaymentIntent</code> 拿到真正的 <code>charge.id</code>，再依當初的資金流向，把每一筆錢（本金 / 手續費 / 轉移）分別退回發出它的那個帳號。</p>
+</div>
+</div>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>資料來源： 本文彙整 <code>Paymentmiddleware/Refund</code> 資料夾內 4 份設計文件，並補上一則真實線上異常案例（<code>異常案例紀錄/04-退款請求失敗.md</code>）作為 DestinationCharge + Application Fee 退款的實際數字對照。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 完整退款流程架構-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-2">
+<div class="srf-section-head">
+<div class="srf-chip">02</div>
+<h2>完整退款流程架構</h2>
+</div>
+
+<p>Stripe 退款最多需要 4 個 API 呼叫，實際會執行哪幾步，取決於 <code>PaymentFlow</code>（DirectCharge / DestinationCharge）與 <code>IsRefundApplicationFee</code> 這兩個條件：</p>
+
+<div class="srf-steps">
+<div class="srf-stepcard">
+<div class="srf-stepnum">1</div>
+<div class="srf-step-title">取得 PaymentIntent <span class="srf-tag info">必執行</span></div>
+<p><code>GET /v1/payment_intents/{id}</code> — 從回應中取出 <code>charge.id</code>、<code>charge.ApplicationFee</code>、<code>charge.Transfer</code>，這是後面 3 步的資料來源。</p>
+</div>
+<div class="srf-stepcard cond">
+<div class="srf-stepnum">2</div>
+<div class="srf-step-title">退還 Application Fee <span class="srf-tag warn">條件執行</span></div>
+<p><code>POST /v1/application_fees/{applicationFeeId}/refunds</code> — 僅在 <code>is_refund_application_fee=true</code> 且 <code>application_fee_amount &gt; 0</code> 時才執行，退還平台向子帳號收取的手續費。</p>
+</div>
+<div class="srf-stepcard cond">
+<div class="srf-stepnum">3</div>
+<div class="srf-step-title">撤銷資金轉移 <span class="srf-tag warn">條件執行</span></div>
+<p><code>POST /v1/transfers/{transferId}/reversals</code> — 僅在 <code>payment_flow = DestinationCharge</code> 時執行，撤銷付款當初從主帳號轉給子帳號的資金。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">4</div>
+<div class="srf-step-title">正式退款 <span class="srf-tag info">必執行</span></div>
+<p><code>POST /v1/refunds</code> — 對 Step 1 取得的 Charge 發起實際退款，退還金額回到持卡人。</p>
+</div>
+</div>
+
+<h3>API 呼叫彙總</h3>
+<table>
+<thead><tr><th>步驟</th><th>API</th><th>說明</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>GET /v1/payment_intents/{id}</code></td><td>取得付款意圖，提取 Charge 資訊</td><td><span class="srf-tag info">必執行</span></td></tr>
+<tr><td>2</td><td><code>POST /v1/application_fees/{fee_id}/refunds</code></td><td>退還 Application Fee</td><td><code>IsRefundApplicationFee=true</code> 且 <code>ApplicationFeeAmount &gt; 0</code></td></tr>
+<tr><td>3</td><td><code>POST /v1/transfers/{transfer_id}/reversals</code></td><td>撤銷 Transfer</td><td><code>StripePaymentFlow = DestinationCharge</code></td></tr>
+<tr><td>4</td><td><code>POST /v1/refunds</code></td><td>正式退款至持卡人</td><td><span class="srf-tag info">必執行</span></td></tr>
+</tbody>
+</table>
+
+<div class="srf-callout ok">
+<span class="srf-icon">✅</span>
+<p>組合結果： 最少情況（DirectCharge、不退手續費）只需 2 支 API；最多情況（DestinationCharge、同時退手續費）需要串完全部 4 支。詳細組合請見「05 DirectCharge 退款」「06 DestinationCharge 退款」兩節的情境範例。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 金額轉換規則-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-3">
+<div class="srf-section-head">
+<div class="srf-chip">03</div>
+<h2>金額轉換規則</h2>
+</div>
+
+<p>Stripe API 一律使用最小貨幣單位（smallest currency unit），PMW 呼叫任何金額相關的 Stripe API 之前，都要先經過同一個轉換函式：</p>
+
+<pre class="srf-pre" data-lang="C#"><span class="kw">private</span> <span class="type">string</span> AmountConvert(<span class="type">decimal</span> amount)
+{
+&nbsp;
+    <span class="kw">return</span> Math.Floor(amount * <span class="num">100</span>).ToString();
+}</pre>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>例如 <code>HKD 100.00</code> 呼叫 Stripe API 時要傳入 <code>10000</code>。退款金額（<code>request.Amount</code>）與手續費金額（<code>ApplicationFeeAmount</code>）都需要經過這個轉換，兩者不可以直接傳原始金額。</p>
+</div>
+
+<h3>RefundRequestExtendInfo 欄位</h3>
+<pre class="srf-pre" data-lang="C#"><span class="cm">// 繼承自 BaseRequestExtendInfo</span>
+<span class="kw">public</span> StripePaymentFlowEnum StripePaymentFlow { <span class="kw">get</span>; <span class="kw">set</span>; }  <span class="cm">// DirectCharge / DestinationCharge</span>
+<span class="kw">public</span> <span class="type">string</span> SubAccount { <span class="kw">get</span>; <span class="kw">set</span>; }                        <span class="cm">// Stripe sub-account ID</span>
+&nbsp;
+<span class="cm">// 退款專用欄位</span>
+<span class="kw">public</span> <span class="type">bool</span> IsRefundApplicationFee { <span class="kw">get</span>; <span class="kw">set</span>; }              <span class="cm">// 是否退還手續費</span>
+<span class="kw">public</span> <span class="type">decimal</span> ApplicationFeeAmount { <span class="kw">get</span>; <span class="kw">set</span>; }             <span class="cm">// 手續費金額（原始金額，非最小單位）</span></pre>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab Step 4：退款 Request Body 與 ReturnCode-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-4">
+<div class="srf-section-head">
+<div class="srf-chip">04</div>
+<h2>Step 4：退款 Request Body 與 ReturnCode</h2>
+</div>
+
+<p>不論 DirectCharge 或 DestinationCharge，最後一步都要呼叫同一支 <code>POST /v1/refunds</code>，差別只在於是否帶 <code>Stripe-Account</code> Header：</p>
+
+<pre class="srf-pre" data-lang="HTTP">POST /v1/refunds
+Stripe-Account: {subAcct}   ← 僅 DirectCharge 帶此 header
+&nbsp;
+{
+  "charge": "{charge.id}",
+  "amount": "{AmountConvert(request.Amount)}",
+  "refund_application_fee": "false",
+  "metadata[request_id]": "{request.RequestId}"
+}</pre>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p><code>refund_application_fee</code> 固定為 <code>"false"</code>： Application Fee 的退款已經在 Step 2 用獨立 API、精確金額處理過了，這裡刻意不讓 Stripe 自動退——若設為 <code>true</code>，Stripe 會依比例自動退還 Application Fee，PMW 就無法精確控制退多少手續費。</p>
+</div>
+
+<h3>ReturnCode 對照</h3>
+<table>
+<thead><tr><th>情境</th><th>ReturnCode</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>退款成功</td><td><span class="srf-tag ok">1000</span> Success</td><td>Stripe <code>POST /v1/refunds</code> 正常回應</td></tr>
+<tr><td><code>ApiException</code></td><td><span class="srf-tag danger">4001</span> RefundFailed</td><td>Stripe API 回傳錯誤（如 insufficient funds）</td></tr>
+<tr><td><code>ArgumentNullException</code></td><td><span class="srf-tag danger">4001</span> RefundFailed</td><td>Charge 資料異常（如 <code>.Single()</code> 找不到 Charge）</td></tr>
+<tr><td>其他未知例外</td><td><span class="srf-tag warn">re-throw</span></td><td><code>LogError</code> 後直接往上拋，不吞例外</td></tr>
+</tbody>
+</table>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab DirectCharge 退款-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-5">
+<div class="srf-section-head">
+<div class="srf-chip">05</div>
+<h2>DirectCharge 退款</h2>
+</div>
+
+<p class="srf-file-path">適用條件：<code>request.ExtendInfo.StripePaymentFlow == StripePaymentFlowEnum.DirectCharge</code></p>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>DirectCharge 模式： 付款時 <code>PaymentMethod</code> 和 <code>PaymentIntent</code> 都在子帳號（Connected Account）下建立。退款時，所有操作也必須在子帳號下執行，需帶 <code>Stripe-Account</code> Header。</p>
+</div>
+
+<h3>Step 1：取得 PaymentIntent（帶子帳號）</h3>
+<pre class="srf-pre" data-lang="HTTP">GET /v1/payment_intents/{transactionId}
+Stripe-Account: {subAcct}
+Authorization: ******</pre>
+
+<p>回應中取出：</p>
+<pre class="srf-pre" data-lang="Text">paymentIntent.charges.data[0].id            → charge.id（退款用）
+paymentIntent.charges.data[0].ApplicationFee → fee.id（退手續費用）</pre>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p><code>paymentIntent.charges.data.Single()</code> 預期只有一筆 Charge，若無則拋出 <code>ArgumentNullException</code>（對應 ReturnCode：<code>RefundFailed</code>）。</p>
+</div>
+
+<h3>Step 2（條件）：退還 Application Fee</h3>
+<p>僅在 <code>IsRefundApplicationFee=true</code> 且 <code>ApplicationFeeAmount &gt; 0</code> 時執行：</p>
+<pre class="srf-pre" data-lang="HTTP">POST /v1/application_fees/{charge.ApplicationFee}/refunds
+Authorization: ******
+（無 Stripe-Account header — Application Fee 在主帳號下）
+&nbsp;
+{
+  "amount": "{AmountConvert(ApplicationFeeAmount)}"
+}</pre>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p>Application Fee Refund 不帶子帳號 Header，因為 Application Fee 收取後存放在平台主帳號，退款也在主帳號執行。</p>
+</div>
+
+<h3>Step 3（DirectCharge 跳過）：Transfer Reversal</h3>
+<p>DirectCharge 不執行 Transfer Reversal，此步驟為 DestinationCharge 專用。</p>
+
+<h3>Step 4：正式退款</h3>
+<pre class="srf-pre" data-lang="HTTP">POST /v1/refunds
+Stripe-Account: {subAcct}   ← DirectCharge 必帶
+Authorization: ******
+&nbsp;
+{
+  "charge": "{charge.id}",
+  "amount": "{AmountConvert(request.Amount)}",
+  "refund_application_fee": "false",
+  "metadata[request_id]": "{request.RequestId}"
+}</pre>
+
+<h3>資金流向示意</h3>
+<pre class="srf-pre" data-lang="Flow">付款時：
+  持卡人 → [Stripe] → 子帳號（Connected Account）
+             └→ Platform 收取 Application Fee
+&nbsp;
+退款時：
+  子帳號（Connected Account）→ [Stripe] → 持卡人   （Step 4: POST /v1/refunds + Stripe-Account）
+  Platform → [Stripe] → 持卡人（或減少 Application Fee）  （Step 2: POST /v1/application_fees/{id}/refunds）</pre>
+
+<h3>情境範例</h3>
+<table>
+<thead><tr><th>情境</th><th>ExtendInfo</th><th>執行步驟</th></tr></thead>
+<tbody>
+<tr><td>一般退款（不退手續費）</td><td><code>is_refund_application_fee=false, application_fee_amount=0</code></td><td>Step 1 → Step 4（共 2 個 API 呼叫）</td></tr>
+<tr><td>退款同時退手續費</td><td><code>is_refund_application_fee=true, application_fee_amount=15.00</code></td><td>Step 1 → Step 2 → Step 4（共 3 個 API 呼叫）</td></tr>
+</tbody>
+</table>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab DestinationCharge 退款-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-6">
+<div class="srf-section-head">
+<div class="srf-chip">06</div>
+<h2>DestinationCharge 退款</h2>
+</div>
+
+<p class="srf-file-path">適用條件：<code>request.ExtendInfo.StripePaymentFlow == StripePaymentFlowEnum.DestinationCharge</code></p>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>DestinationCharge 模式： 付款時在主帳號下建立 PaymentIntent，資金收取後透過 <code>transfer_data[destination]</code> 轉給子帳號。退款時，主帳號執行退款，子帳號的 Transfer 也需要同步撤銷（Transfer Reversal），否則子帳號的錢不會回到主帳號，資金會不平衡。</p>
+</div>
+
+<h3>Step 1：取得 PaymentIntent（不帶子帳號）</h3>
+<pre class="srf-pre" data-lang="HTTP">GET /v1/payment_intents/{transactionId}
+Authorization: ******
+（無 Stripe-Account header）</pre>
+
+<p>回應中取出：</p>
+<pre class="srf-pre" data-lang="Text">paymentIntent.charges.data[0].id            → charge.id（退款用）
+paymentIntent.charges.data[0].ApplicationFee → fee.id（退手續費用）
+paymentIntent.charges.data[0].Transfer       → transfer.id（撤銷轉移用）</pre>
+
+<h3>Step 2（條件）：退還 Application Fee</h3>
+<p>與 DirectCharge 相同，僅在 <code>IsRefundApplicationFee=true</code> 且 <code>ApplicationFeeAmount &gt; 0</code> 時執行：</p>
+<pre class="srf-pre" data-lang="HTTP">POST /v1/application_fees/{charge.ApplicationFee}/refunds
+Authorization: ******
+&nbsp;
+{
+  "amount": "{AmountConvert(ApplicationFeeAmount)}"
+}</pre>
+
+<h3>Step 3（DestinationCharge 必執行）：Transfer Reversal</h3>
+<pre class="srf-pre" data-lang="HTTP">POST /v1/transfers/{charge.Transfer}/reversals
+Authorization: ******
+（無 Stripe-Account header — Transfer 在主帳號下管理）
+&nbsp;
+{
+  "amount": "{AmountConvert(request.Amount)}"
+}</pre>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p>目的： 付款時主帳號透過 Transfer 將資金移至子帳號，退款時需同步撤銷這筆轉移，否則子帳號的資金不會回到主帳號，造成資金不平衡。</p>
+</div>
+
+<h3>Step 4：正式退款</h3>
+<pre class="srf-pre" data-lang="HTTP">POST /v1/refunds
+Authorization: ******
+（無 Stripe-Account header — 主帳號退款）
+&nbsp;
+{
+  "charge": "{charge.id}",
+  "amount": "{AmountConvert(request.Amount)}",
+  "refund_application_fee": "false",
+  "metadata[request_id]": "{request.RequestId}"
+}</pre>
+
+<h3>與 DirectCharge 的關鍵差異</h3>
+<table>
+<thead><tr><th>項目</th><th>DirectCharge</th><th>DestinationCharge</th></tr></thead>
+<tbody>
+<tr><td>Step 1 subAcct header</td><td><span class="srf-tag ok">✅ 帶（子帳號）</span></td><td><span class="srf-tag danger">❌ 不帶（主帳號）</span></td></tr>
+<tr><td>Step 3 Transfer Reversal</td><td><span class="srf-tag danger">❌ 不執行</span></td><td><span class="srf-tag ok">✅ 必執行</span></td></tr>
+<tr><td>Step 4 subAcct header</td><td><span class="srf-tag ok">✅ 帶（子帳號）</span></td><td><span class="srf-tag danger">❌ 不帶（主帳號）</span></td></tr>
+<tr><td>退款執行帳號</td><td>子帳號</td><td>主帳號</td></tr>
+</tbody>
+</table>
+
+<h3>資金流向示意</h3>
+<pre class="srf-pre" data-lang="Flow">付款時：
+  持卡人 → [Stripe 主帳號] → Transfer → 子帳號
+                └→ Platform 收取 Application Fee
+&nbsp;
+退款時：
+  子帳號 ← [Transfer Reversal] ← 主帳號       （Step 3: POST /v1/transfers/{id}/reversals）
+  主帳號 → [Stripe] → 持卡人                  （Step 4: POST /v1/refunds，無 subAcct）
+  Platform → [Stripe] → 持卡人（退手續費時）   （Step 2: POST /v1/application_fees/{id}/refunds）</pre>
+
+<h3>情境範例</h3>
+<table>
+<thead><tr><th>情境</th><th>ExtendInfo</th><th>執行步驟</th></tr></thead>
+<tbody>
+<tr><td>一般退款（不退手續費）</td><td><code>is_refund_application_fee=false, application_fee_amount=0</code></td><td>Step 1 → Step 3 → Step 4（共 3 個 API 呼叫）</td></tr>
+<tr><td>退款同時退手續費</td><td><code>is_refund_application_fee=true, application_fee_amount=15.00</code></td><td>Step 1 → Step 2 → Step 3 → Step 4（共 4 個 API 呼叫，最多情況）</td></tr>
+</tbody>
+</table>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab Application Fee 退款規則-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-7">
+<div class="srf-section-head">
+<div class="srf-chip">07</div>
+<h2>Application Fee 退款規則</h2>
+</div>
+
+<p>Stripe Connect 架構中，平台（主帳號）在每筆付款時可從 Connected Account（子帳號）收取手續費，稱為 Application Fee：</p>
+
+<pre class="srf-pre" data-lang="Flow">付款金額 100 HKD
+  └→ 子帳號收到 97 HKD
+  └→ 平台主帳號收到 Application Fee 3 HKD</pre>
+
+<p>當訂單退款時，會視情況決定是否連同 Application Fee 一起退還。</p>
+
+<h3>觸發條件</h3>
+<p>兩個條件都必須成立才會執行 Application Fee 退款：</p>
+<pre class="srf-pre" data-lang="C#"><span class="kw">if</span> (request.ExtendInfo.IsRefundApplicationFee == <span class="kw">true</span> &amp;&amp;
+    request.ExtendInfo.ApplicationFeeAmount &gt; <span class="num">0</span>)
+{
+    <span class="kw">await</span> <span class="kw">this</span>._stripeHttpClient.CreateApplicationFeeRefundAsync(charge.ApplicationFee, body);
+}</pre>
+
+<table>
+<thead><tr><th>欄位</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td><code>is_refund_application_fee</code></td><td>旗標，由上游系統決定此筆退款是否退還手續費</td></tr>
+<tr><td><code>application_fee_amount</code></td><td>要退還的手續費金額（原始金額，會乘以 100 轉換）</td></tr>
+</tbody>
+</table>
+
+<div class="srf-callout warn">
+<span class="srf-icon">⚠️</span>
+<p><code>application_fee_amount = 0</code> 時不退： 即使 <code>is_refund_application_fee = true</code>，若金額為 0 也不會執行，避免呼叫 Stripe API 時帶入 0 金額導致錯誤。</p>
+</div>
+
+<h3>API 呼叫</h3>
+<pre class="srf-pre" data-lang="HTTP">POST /v1/application_fees/{applicationFeeId}/refunds
+Authorization: ******
+（無 Stripe-Account header）
+&nbsp;
+{
+  "amount": "{AmountConvert(ApplicationFeeAmount)}"
+}</pre>
+<p><code>applicationFeeId</code> 來自 Step 1 取得的 <code>charge.ApplicationFee</code>。</p>
+
+<h3>注意事項</h3>
+<ul class="srf-checklist">
+<li>不帶子帳號 header： Application Fee 是由平台主帳號收取，存放在主帳號餘額，退款時直接在主帳號執行，不論 DirectCharge 或 DestinationCharge 都不帶 <code>Stripe-Account</code> header</li>
+<li><code>refund_application_fee</code> 在 <code>POST /v1/refunds</code> 固定為 <code>false</code>： Application Fee 的退款已在 Step 2 獨立精確控制金額，若設為 <code>true</code>，Stripe 會自動依比例退還，無法精確控制金額</li>
+<li>部分退款的 Application Fee 計算： <code>ApplicationFeeAmount</code> 由上游傳入，PMW 不自行計算，上游應依退款比例自行算出要退多少手續費</li>
+</ul>
+
+<h3>情境對照</h3>
+<table>
+<thead><tr><th>情境</th><th><code>is_refund_application_fee</code></th><th><code>application_fee_amount</code></th><th>是否執行 Step 2</th></tr></thead>
+<tbody>
+<tr><td>全額退款含手續費</td><td><code>true</code></td><td><code>15.00</code></td><td><span class="srf-tag ok">✅ 是</span></td></tr>
+<tr><td>全額退款不退手續費</td><td><code>false</code></td><td><code>15.00</code></td><td><span class="srf-tag danger">❌ 否</span></td></tr>
+<tr><td>部分退款含手續費</td><td><code>true</code></td><td><code>7.50</code></td><td><span class="srf-tag ok">✅ 是</span></td></tr>
+<tr><td>手續費為零</td><td><code>true</code></td><td><code>0</code></td><td><span class="srf-tag danger">❌ 否（金額 = 0 跳過）</span></td></tr>
+</tbody>
+</table>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 真實案例：DestinationCharge + Application Fee 退款-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-8">
+<div class="srf-section-head warn">
+<div class="srf-chip">08</div>
+<h2>真實案例：DestinationCharge + Application Fee 退款</h2>
+</div>
+
+<p>一筆 <code>CreditCardOnce_Stripe</code> 訂單的退款請求記錄，剛好完整對應到 DestinationCharge + Application Fee 的全部 4 個 API 步驟，可以拿真實數字驗證前面的規則：</p>
+
+<div class="srf-evidence">
+<div class="srf-evidence-head"><span class="srf-tag">案例</span>CreditCardOnceStripeRefundRequestFinish</div>
+<p class="srf-file-path">來源：異常案例紀錄/04-退款請求失敗.md</p>
+<pre class="srf-pre" data-lang="Log">{"RefundRequestIds":[178103,178105],"TradesOrderGroupId":2621242,"PayType":"CreditCardOnce_Stripe"}
+&nbsp;
+Payment Flow: DestinationCharge, SubAcct: acct_1LshoB2eEjG5vam6
+TradesOrderSlaveCode：TS260318M000059
+&nbsp;
+Stripe 退款金額：4203.72　手續費：210.19　費率：0.050</pre>
+<p>驗證一下手續費比例：<code>210.19 ÷ 4203.72 ≈ 0.05</code>，剛好對上記錄的 <code>費率 0.050</code>，也代表 <code>ApplicationFeeAmount</code> 是上游依這筆訂單的實際費率算好才傳進來的，PMW 本身不重算。</p>
+</div>
+
+<p>依 <code>PayType = CreditCardOnce_Stripe</code> 加上 <code>PayFlow = DestinationCharge</code>，這筆退款理論上會依序執行：</p>
+<div class="srf-flow">
+<div class="srf-step">Step 1 取得 PaymentIntent</div><span class="srf-arrow">→</span>
+<div class="srf-step cond">Step 2 退 Application Fee</div><span class="srf-arrow">→</span>
+<div class="srf-step">Step 3 Transfer Reversal</div><span class="srf-arrow">→</span>
+<div class="srf-step">Step 4 正式退款</div>
+</div>
+
+<div class="srf-callout info">
+<span class="srf-icon">🔍</span>
+<p>排查方式： 案例中附上的 SQL 是從 <code>TradesOrderSlave</code> 關聯 <code>TradesOrderGroup</code>／<code>TradesOrderThirdPartyPayment</code>／<code>OrderSlaveFlow</code>，用 <code>TradesOrderGroupId</code> 反查訂單當下的付款狀態、金流回應訊息與出貨流程狀態，是排查「退款請求送出後結果為何」的標準做法：先確認 <code>TradesOrderThirdPartyPayment_StatusDef</code> 與 <code>ResponseMsg</code>，再對照本文 04 節的 ReturnCode 表判斷卡在哪一步。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 異常案例：Application Fee 重複退款導致金額超退-->
+
+<div class="srf">
+<div class="srf-container">
+
+<section id="srf-10">
+<div class="srf-section-head warn">
+<div class="srf-chip">10</div>
+<h2>異常案例：Refund amount 大於 unrefunded amount on fee</h2>
+</div>
+
+<p>Grafana 告警擷取到一筆第三方 API 4XX 錯誤，實際追下去是 Application Fee 退款時金額超過該筆 Fee 剩餘可退額度，觸發 Stripe 的 <code>invalid_request_error</code>：</p>
+
+<div class="srf-evidence">
+<div class="srf-evidence-head"><span class="srf-tag danger">告警</span>第三方 API 4XX</div>
+<p class="srf-file-path">Labels：env=prod　market=hk　service=Payment　｜　Annotations：Grafana_state_reason=NoData，Ref_id=A</p>
+<pre class="srf-pre" data-lang="HTTP">REQUEST PATH: /api/v1.0/Refund/CreditCardOnce_Stripe/TG260307Y00010
+REQUEST METHOD: POST
+&nbsp;
+request "POST" "https://api.stripe.com/v1/application_fees/fee_1T8LSkQgTqi9XNs5Rn6BZA2k/refunds"
+&nbsp;
+HTTP Response - Status: BadRequest
+{
+  "error": {
+    "message": "Refund amount ($8.96) is greater than unrefunded amount on fee ($7.36)",
+    "param": "amount",
+    "request_log_url": "https://dashboard.stripe.com/acct_1KE3thHTw5MqAUMJ/workbench/logs?object=req_21VZr6ZOycmLtU",
+    "type": "invalid_request_error"
+  }
+}</pre>
+<p>這張單在 13:02 左右因為遇到 API Key 權限問題，導致退款流程執行到一半失敗。</p>
+</div>
+
+<p>13:02 當下的退款發生歷程：</p>
+<div class="srf-steps">
+<div class="srf-stepcard">
+<div class="srf-stepnum">1</div>
+<div class="srf-step-title">取得 PaymentIntent</div>
+<p>正常執行完成。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">2</div>
+<div class="srf-step-title">退還 Application Fee</div>
+<p>正常執行完成，\$7.36 額度已先被扣掉一部分。</p>
+</div>
+<div class="srf-stepcard cond">
+<div class="srf-stepnum">3</div>
+<div class="srf-step-title">Transfer Reversal <span class="srf-tag danger">失敗</span></div>
+<p>此時 API Key 權限失效，Transfer Reversal 呼叫失敗，整筆退款流程中斷在這一步。</p>
+</div>
+<div class="srf-stepcard">
+<div class="srf-stepnum">4</div>
+<div class="srf-step-title">正式退款</div>
+<p>未執行到，流程已在 Step 3 中斷。</p>
+</div>
+</div>
+
+<div class="srf-callout danger">
+<span class="srf-icon">⚠️</span>
+<p>根因： AM 將 API Key 權限復原後，系統重新觸發了一次以上的退款流程，但先前中斷前 Step 2（退還 Application Fee）已經成功執行過一次。重試時 Step 2 又被重複執行，導致同一筆 Application Fee 被要求退還超過其剩餘可退金額（<code>$8.96 &gt; $7.36</code>），Stripe 因而回傳 <code>invalid_request_error</code>。</p>
+</div>
+
+<div class="srf-callout info">
+<span class="srf-icon">💡</span>
+<p>啟示： 退款流程中斷重試時，需要判斷哪些步驟已經成功執行過（尤其是 Step 2 Application Fee 退款這種「非冪等」的操作），避免重試時對同一筆 Fee 重複扣款；否則即使前面 3 步都各自符合規則，組合起來仍可能超退。</p>
+</div>
+
+<h3>後續處理</h3>
+<p>由於 Step 2 重複執行導致 Step 3（Transfer Reversal）與 Step 4（正式退款）卡住未能完成，最終需要人工介入，手動補執行 <code>Transfer Reversal</code> 與 <code>Refund</code> 這兩步，才能讓整筆退款流程回到一致狀態。</p>
+
+<div class="srf-callout ok">
+<span class="srf-icon">✅</span>
+<p>處理結果： 手動補執行 Step 3、Step 4 後，這筆訂單的退款狀態恢復正常，資金也正確回到持卡人與各帳號。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+{% endtabs %}

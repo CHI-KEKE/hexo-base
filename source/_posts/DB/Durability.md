@@ -1,0 +1,737 @@
+---
+title: Durability
+date: 2026-08-24 08:40:00
+categories: DB
+top_img: https://github.com/CHI-KEKE/pics/blob/main/DB/durability.png?raw=true
+cover : https://github.com/CHI-KEKE/pics/blob/main/DB/durability.png?raw=true
+toc:
+toc_number:
+comments :
+
+---
+
+{% tabs durability-harbor-ledger %}
+
+
+<!-- tab 總覽-->
+
+<style>
+.hl{
+  display:block;
+  font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'PingFang TC','Microsoft JhengHei',sans-serif;
+  background:
+    radial-gradient(700px 400px at 92% -8%, rgba(190,38,35,.10), transparent 60%),
+    radial-gradient(900px 500px at -8% 108%, rgba(14,55,70,.10), transparent 55%),
+    #eae8dc;
+  color:#182228!important;
+  line-height:1.75;
+  border-radius:14px;
+  padding:1px 0 28px;
+  margin:0 0 20px;
+  overflow:hidden;
+  --ink:#182228; --sub:#48585d; --card:#f4f2ec; --line:#d7cfba;
+  --navy:#0e3746; --navy2:#0a2530; --red:#be2623; --red2:#8f1c1a; --tan:#a9946a; --tan2:#8a7550; --danger:#be2623;
+  --shadow:0 10px 28px -12px rgba(14,55,70,.28);
+}
+.hl *{box-sizing:border-box;}
+.hl a{color:var(--red)!important;text-decoration:none;}
+.hl a:hover{text-decoration:underline;}
+.hl .hl-hero{padding:48px 6vw 34px;text-align:center;position:relative;overflow:hidden;background:linear-gradient(160deg,var(--navy2),var(--navy));}
+.hl .hl-hero::before{content:"";position:absolute;top:-34px;right:-34px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d9534f,var(--red2));opacity:.35;pointer-events:none;}
+.hl .hl-eyebrow{display:inline-block;font-size:.78rem;letter-spacing:.16em;color:#f4f2ec!important;text-transform:uppercase;font-weight:700;margin-bottom:12px;background:rgba(190,38,35,.4);padding:6px 14px;border-radius:3px;}
+.hl .hl-hero h1{font-size:1.7rem;margin:0 0 12px;color:#f4f2ec!important;font-weight:800;}
+.hl .hl-hero p{color:#cdd8da!important;max-width:700px;margin:0 auto;font-size:1rem;}
+.hl .hl-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;}
+.hl .hl-badge{background:rgba(244,242,236,.12);border:1px solid rgba(244,242,236,.28);padding:6px 14px;border-radius:3px;font-size:.8rem;color:#eef1ee!important;}
+.hl .hl-container{padding:0 5vw;}
+.hl section{margin-bottom:44px;}
+.hl .hl-section-head{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.hl .hl-section-head .hl-chip{flex:none;width:38px;height:38px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,var(--navy2),var(--navy));color:#f4f2ec!important;font-size:1rem;box-shadow:var(--shadow);}
+.hl .hl-section-head.accent .hl-chip{background:linear-gradient(135deg,var(--red2),var(--red));}
+.hl .hl-section-head.tan .hl-chip{background:linear-gradient(135deg,var(--tan2),var(--tan));}
+.hl .hl-section-head h2{margin:0;font-size:1.3rem;font-weight:800;color:var(--ink)!important;}
+.hl h3{font-size:1.08rem;margin:26px 0 10px;color:var(--ink)!important;border-left:4px solid var(--navy);padding-left:10px;}
+.hl p{color:var(--sub)!important;}
+.hl .hl-card{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:18px 22px;margin:14px 0;}
+.hl table{width:auto;max-width:100%;border-collapse:separate;border-spacing:0;background:var(--card)!important;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:14px 0 22px;font-size:.88rem;box-shadow:var(--shadow);}
+.hl thead th{background:#e3ddc9!important;color:var(--ink)!important;text-align:left;padding:13px 16px;font-weight:800;border-bottom:1px solid var(--line);}
+.hl tbody td{padding:13px 16px;border-bottom:1px solid var(--line);color:#2c3a3f!important;vertical-align:top;background:var(--card)!important;}
+.hl tbody tr:last-child td{border-bottom:none;}
+.hl tbody tr:hover td{background:#eee9da!important;}
+.hl tbody td strong{color:var(--ink)!important;}
+.hl tbody td code{color:var(--red2)!important;}
+.hl code{font-family:Consolas,'SFMono-Regular','Liberation Mono',Menlo,monospace;background:#e3ddc9!important;color:var(--red2)!important;padding:2px 7px;border-radius:5px;font-size:.88em;border:1px solid #d7cfba;}
+.hl pre.hl-pre{background:#0a1e26!important;border:none;border-radius:10px;padding:20px 22px;overflow-x:auto;margin:16px 0;position:relative;color:#e9efee!important;font-size:.85rem!important;line-height:1.7!important;font-family:Consolas,'SFMono-Regular','Liberation Mono',Menlo,monospace!important;white-space:pre!important;box-shadow:var(--shadow);}
+.hl pre.hl-pre::before{content:attr(data-lang);position:absolute;top:12px;right:16px;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:#7d9498!important;font-family:'Segoe UI',sans-serif;}
+.hl .kw{color:#f2a49e!important;} .hl .str{color:#d7c98f!important;} .hl .cm{color:#6f8a92!important;font-style:italic;} .hl .fn{color:#8fc4d6!important;} .hl .type{color:#e0c07a!important;} .hl .num{color:#d7c98f!important;} .hl .op{color:#f2a49e!important;}
+.hl .hl-callout{border-radius:8px;padding:18px 22px;margin:18px 0;border:1px solid transparent;border-left-width:5px;display:flex;gap:14px;}
+.hl .hl-callout .hl-icon{font-size:1.3rem;flex:none;}
+.hl .hl-callout.info{background:#e6edef;border-color:#a9bcc2;border-left-color:#37606b;}
+.hl .hl-callout.warn{background:#f3ecd8;border-color:#d9c48f;border-left-color:var(--tan);}
+.hl .hl-callout.danger{background:#f8e2e0;border-color:#e29c98;border-left-color:var(--red);}
+.hl .hl-callout.ok{background:#e3edea;border-color:#9db8b0;border-left-color:var(--navy);}
+.hl .hl-callout p{margin:0;font-size:.92rem;color:#2c3a3f!important;}
+.hl .hl-callout strong{color:var(--ink)!important;}
+.hl .hl-tag{display:inline-block;font-size:.72rem;font-weight:800;padding:3px 11px;border-radius:3px;letter-spacing:.02em;}
+.hl .hl-tag.danger{background:#f6d3d1!important;color:var(--red2)!important;}
+.hl .hl-tag.ok{background:#d7e4e0!important;color:var(--navy)!important;}
+.hl .hl-tag.warn{background:#ecdfb9!important;color:var(--tan2)!important;}
+.hl .hl-tag.info{background:#d8e2e4!important;color:#274850!important;}
+.hl .hl-tag.navy{background:#d7e0e2!important;color:var(--navy)!important;}
+.hl .hl-tag.red{background:#f6d3d1!important;color:var(--red2)!important;}
+.hl .hl-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0;}
+.hl .hl-summary-grid .hl-box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;box-shadow:var(--shadow);border-top:4px solid var(--navy);position:relative;overflow:hidden;}
+.hl .hl-summary-grid .hl-box.navy{border-top-color:var(--navy);}
+.hl .hl-summary-grid .hl-box.red{border-top-color:var(--red);}
+.hl .hl-summary-grid .hl-box.tan{border-top-color:var(--tan);}
+.hl .hl-summary-grid .hl-box h4{margin:0 0 8px;color:var(--ink)!important;font-size:.85rem;text-transform:uppercase;letter-spacing:.04em;}
+.hl .hl-summary-grid .hl-box p{margin:0;font-size:.87rem;color:var(--sub)!important;}
+@media (max-width:780px){.hl .hl-summary-grid{grid-template-columns:1fr;}}
+.hl .hl-flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0;}
+.hl .hl-flow .hl-step{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 16px;font-size:.85rem;font-weight:700;color:var(--ink)!important;box-shadow:var(--shadow);}
+.hl .hl-flow .hl-step.cond{background:#f3ecd8;border-color:#d9c48f;color:var(--tan2)!important;}
+.hl .hl-flow .hl-arrow{color:var(--red)!important;font-size:1.2rem;font-weight:900;}
+.hl .hl-steps{display:flex;flex-direction:column;gap:14px;margin:16px 0 22px;}
+.hl .hl-stepcard{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 20px;position:relative;padding-left:60px;box-shadow:var(--shadow);}
+.hl .hl-stepcard .hl-stepnum{position:absolute;left:16px;top:16px;width:30px;height:30px;border-radius:6px;background:linear-gradient(135deg,var(--navy2),var(--navy));color:#f4f2ec!important;font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center;}
+.hl .hl-stepcard.cond .hl-stepnum{background:linear-gradient(135deg,var(--tan2),var(--tan));}
+.hl .hl-stepcard .hl-step-title{font-weight:700;color:var(--ink)!important;font-size:1rem;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hl .hl-stepcard p{margin:6px 0;font-size:.9rem;color:var(--sub)!important;}
+.hl .hl-checklist{list-style:none;padding:0;margin:16px 0;}
+.hl .hl-checklist li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line);color:var(--sub)!important;}
+.hl .hl-checklist li:last-child{border-bottom:none;}
+.hl .hl-checklist li::before{content:"✓";flex:none;width:20px;height:20px;border-radius:4px;background:var(--navy);color:#f4f2ec!important;font-size:.72rem;display:flex;align-items:center;justify-content:center;margin-top:2px;font-weight:900;}
+.hl .hl-evidence{border:1px solid var(--line);background:var(--card);border-radius:10px;box-shadow:var(--shadow);padding:18px 20px;margin:16px 0 22px;}
+.hl .hl-evidence .hl-evidence-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.hl .hl-evidence .hl-evidence-head .hl-tag{background:var(--navy2)!important;color:#f4f2ec!important;}
+.hl .hl-seal-divider{display:flex;align-items:center;gap:10px;justify-content:center;margin:36px 0;color:var(--red)!important;}
+.hl .hl-seal-divider::before,.hl .hl-seal-divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line) 40%,var(--line) 60%,transparent);}
+.hl .hl-seal-divider span{font-size:1.1rem;}
+.hl footer{text-align:center;padding:30px 5vw 6px;color:var(--sub)!important;font-size:.82rem;border-top:1px solid var(--line);margin-top:8px;}
+.hl .hl-swimlane{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:20px 0 30px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.hl .hl-swimlane .sl-head{background:var(--navy);color:#f4f2ec!important;text-align:center;font-weight:800;font-size:.82rem;padding:12px 8px;letter-spacing:.03em;}
+.hl .hl-swimlane .sl-head.red{background:var(--red);}
+.hl .hl-swimlane .sl-head.tan{background:var(--tan);}
+.hl .hl-swimlane .sl-lane{border-right:1px dashed var(--line);padding:18px 12px;background:var(--card);display:flex;flex-direction:column;align-items:center;gap:26px;position:relative;}
+.hl .hl-swimlane .sl-lane:last-child{border-right:none;}
+.hl .hl-swimlane .sl-lane::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--line);z-index:0;}
+.hl .hl-swimlane .sl-node{position:relative;z-index:1;background:#fff!important;border:2px solid var(--navy);color:var(--navy)!important;border-radius:6px;padding:8px 10px;font-size:.74rem;font-weight:700;text-align:center;box-shadow:0 4px 10px -6px rgba(14,55,70,.4);width:100%;}
+.hl .hl-swimlane .sl-node.dim{opacity:.32;border-style:dashed;box-shadow:none;}
+.hl .hl-swimlane .sl-step{position:relative;z-index:1;font-size:.68rem;color:var(--tan2)!important;font-weight:700;background:#f3ecd8;border:1px solid #d9c48f;border-radius:20px;padding:3px 10px;}
+.hl .hl-decision{display:flex;flex-direction:column;gap:0;margin:20px 0 26px;}
+.hl .hl-decision .dc-gate{display:flex;align-items:stretch;gap:14px;margin-bottom:16px;}
+.hl .hl-decision .dc-diamond{flex:none;width:132px;display:flex;align-items:center;justify-content:center;text-align:center;background:var(--navy);color:#f4f2ec!important;font-weight:800;font-size:.78rem;padding:14px 10px;border-radius:10px;position:relative;box-shadow:0 8px 18px -10px rgba(14,55,70,.4);}
+.hl .hl-decision .dc-branches{flex:1;display:flex;flex-direction:column;gap:8px;}
+.hl .hl-decision .dc-branch{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1.5px solid var(--line);border-left:4px solid var(--tan);border-radius:8px;padding:10px 16px;}
+.hl .hl-decision .dc-branch.yes{border-left-color:var(--red);background:#f8e2e0;}
+.hl .hl-decision .dc-branch.no{border-left-color:#b9c3c6;background:#eceae1;opacity:.85;}
+.hl .hl-decision .dc-tag{flex:none;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--navy);color:#f4f2ec!important;margin-top:1px;}
+.hl .hl-decision .dc-branch.no .dc-tag{background:#8a949a!important;}
+.hl .hl-decision .dc-text{font-size:.85rem;line-height:1.7;color:var(--sub)!important;}
+</style>
+
+<div class="hl">
+<div class="hl-hero">
+<span class="hl-eyebrow">DB 系列 · Durability</span>
+<h1>⚓ 「寫入成功」到底代表什麼</h1>
+<p>應用程式送出一筆寫入後，資料庫回覆成功，這句成功背後對資料安全保存的承諾強度，每一種資料庫都不一樣，這篇整理把這件事拆開來看。</p>
+<div class="hl-badges">
+<span class="hl-badge">ACID 的 D</span>
+<span class="hl-badge">WAL / Journal</span>
+<span class="hl-badge">Crash Recovery</span>
+</div>
+</div>
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">01</div>
+<h2>成功回覆背後藏著什麼</h2>
+</div>
+
+<p>假設應用程式執行了一筆 <code>INSERT INTO orders (...)</code>，接著收到資料庫回覆 <code>success</code>。這個 <code>success</code> 其實可能代表很多不同層級的安全程度，從只是進了應用程式自己的記憶體，到已經跨機房複製到其他節點，中間差距非常大。</p>
+
+<div class="hl-steps">
+<div class="hl-stepcard">
+<div class="hl-stepnum">1</div>
+<div class="hl-step-title">Database process 記憶體</div>
+<p>資料先進到資料庫程式自己的記憶體結構裡，這一層本身完全不具備斷電保護能力。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">2</div>
+<div class="hl-step-title">OS page cache</div>
+<p>作業系統層級的快取，仍然停留在記憶體，尚未真正落到磁碟上。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">3</div>
+<div class="hl-step-title">WAL / Journal</div>
+<p>描述這次修改內容的日誌被寫進持久儲存，這是多數資料庫定義「已經安全」的最低門檻。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">4</div>
+<div class="hl-step-title">SSD / disk persistent storage</div>
+<p>資料真正落在磁碟的持久儲存介質上。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">5</div>
+<div class="hl-step-title">其他 replica</div>
+<p>資料被複製到其他節點，即使整台機器故障，其他節點仍保有這份資料。</p>
+</div>
+</div>
+
+<div class="hl-callout danger">
+<span class="hl-icon">⚠️</span>
+<p><strong>只停在記憶體的風險：</strong>如果資料庫只做到「資料進了 RAM 就回覆成功」，一旦發生斷電，RAM 裡的內容會直接消失，等於已經回報成功的資料實際上並不存在。</p>
+</div>
+
+<div class="hl-flow">
+<div class="hl-step">寫入</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">回覆 success</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step cond">突然斷電</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step cond">RAM 消失</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step cond">資料消失</div>
+</div>
+
+</section>
+
+<section>
+<div class="hl-section-head accent">
+<div class="hl-chip">02</div>
+<h2>比較可靠的做法：WAL / Journal</h2>
+</div>
+
+<p>比較可靠的資料庫通常會使用 <code>WAL</code>（Write-Ahead Log）或 <code>Journal</code>。以 PostgreSQL 為例，每次 transaction commit 並不會立刻把真正的 table data page 全部寫進磁碟，而是先確保描述這次修改的 <code>WAL record</code> 被寫進持久儲存，再告訴客戶端 transaction committed。即使真正的資料頁還沒完成寫入，重新開機後也能利用 <code>WAL</code> 把資料重做回來。PostgreSQL 官方文件也明確說明，正常的 synchronous commit 會等待 <code>WAL</code> flush 到永久儲存後才回覆成功，詳見 <a href="https://www.postgresql.org/docs/17/wal-reliability.html" target="_blank">WAL Reliability</a>。</p>
+
+<div class="hl-callout ok">
+<span class="hl-icon">🧭</span>
+<p><strong>這就是 ACID 裡面的 D：Durability。</strong>只要資料庫正式告訴使用端 transaction committed，就不應該因為普通的 process crash、OS crash 或 power loss 而消失。</p>
+</div>
+
+<table>
+<thead><tr><th>縮寫</th><th>名稱</th><th>保證內容</th></tr></thead>
+<tbody>
+<tr><td><strong>A</strong></td><td>Atomicity（原子性）</td><td>一筆 transaction 要嘛全部生效，要嘛完全不生效</td></tr>
+<tr><td><strong>C</strong></td><td>Consistency（一致性）</td><td>transaction 結束後，資料要符合資料庫定義的所有規則</td></tr>
+<tr><td><strong>I</strong></td><td>Isolation（隔離性）</td><td>多個 transaction 同時執行時，彼此互不干擾</td></tr>
+<tr><td><strong>D</strong></td><td>Durability（持久性）</td><td>一旦 commit 成功，就不能因為一般性的當機而消失</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<section>
+<div class="hl-section-head tan">
+<div class="hl-chip">03</div>
+<h2>各家資料庫的 durability 機制一覽</h2>
+</div>
+
+<table>
+<thead><tr><th>DB</th><th>主要 durability 機制</th><th>一般預設行為</th><th>單機斷電保護</th><th>多機故障保護</th></tr></thead>
+<tbody>
+<tr><td>PostgreSQL</td><td><code>WAL</code> + <code>fsync</code></td><td>commit 等 WAL 持久化</td><td>強</td><td>取決於 replication 設定</td></tr>
+<tr><td>MySQL / InnoDB</td><td>Redo Log + <code>fsync</code></td><td>commit flush redo log</td><td>強</td><td>取決於 replication 設定</td></tr>
+<tr><td>MongoDB</td><td>Journal + Write Concern</td><td>預設多為 <code>majority</code></td><td>強</td><td>很強，可要求 majority</td></tr>
+<tr><td>DynamoDB</td><td>Multi-AZ replication</td><td>AWS 自動處理</td><td>很強</td><td>預設跨 3 個 AZ</td></tr>
+<tr><td>SQL Server</td><td>Transaction Log</td><td>commit 等 log 持久化</td><td>強</td><td>取決於 Availability Group 等設定</td></tr>
+<tr><td>Redis</td><td>RDB / AOF</td><td>durability 可高度調整</td><td>預設不像傳統 RDBMS 那麼強</td><td>取決於 replication / persistence 設定</td></tr>
+</tbody>
+</table>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+<!-- tab 代價與取捨-->
+
+<div class="hl">
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">04</div>
+<h2>越安全，代價就是效能</h2>
+</div>
+
+<p>這裡碰到一個非常重要的資料庫設計思想：越要求高 durability，一次 write 需要等待的事情就越多，延遲與成本也會跟著上升。</p>
+
+<div class="hl-flow">
+<div class="hl-step">寫 WAL</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">fsync</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">replica 1</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">replica 2</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">跨 AZ</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step cond">跨 region</div>
+</div>
+
+<div class="hl-callout info">
+<span class="hl-icon">💡</span>
+<p>很多 NoSQL 系統真正提供的並不是「不保證資料」，而是把選擇權交出來：由使用端決定這次資料值得付出多少 consistency、durability、latency 成本。</p>
+</div>
+
+</section>
+
+<section>
+<div class="hl-section-head accent">
+<div class="hl-chip">05</div>
+<h2>不同情境需要的 durability 程度不一樣</h2>
+</div>
+
+<ul class="hl-checklist">
+<li><strong>銀行轉帳：</strong>非常在乎 durability，不能有任何遺失。</li>
+<li><strong>Like 數計數器：</strong>偶爾掉一個可能可以接受。</li>
+<li><strong>Session cache：</strong>掉了之後重新登入也許就足夠。</li>
+<li><strong>Analytics event：</strong>可能可以接受批次或非同步處理。</li>
+<li><strong>訂單付款：</strong>絕對不能隨便遺失。</li>
+</ul>
+
+<div class="hl-evidence">
+<div class="hl-evidence-head">
+<span class="hl-tag">重點結論</span>
+<strong>該記住的不是「NoSQL 會丟資料」</strong>
+</div>
+<p>真正該記住的是，不要只看到 API 回傳 <code>success</code>，就假設已經知道這個 <code>success</code> 背後的 durability semantics。現代資料庫的 durability 並不是單純「SQL 有、NoSQL 沒有」，真正的差異是它預設把「成功」定義在哪個層級，以及允許怎麼調整 durability 與 performance 之間的交換。</p>
+</div>
+
+<div class="hl-seal-divider"><span>⚓</span></div>
+
+<p>接下來幾個分頁，依序拆解 PostgreSQL、MySQL、SQL Server、MongoDB、DynamoDB、Redis 各自的 durability 機制與可調整項目。</p>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+<!-- tab PostgreSQL-->
+
+<div class="hl">
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">06</div>
+<h2>PostgreSQL：WAL 是 durability 的核心</h2>
+</div>
+
+<p>PostgreSQL 正常的 synchronous commit 流程如下，重點在於它並不是等真正的 table data page 寫入 SSD，只需要 <code>WAL</code> 已經 durable 就足夠。</p>
+
+<div class="hl-steps">
+<div class="hl-stepcard">
+<div class="hl-stepnum">1</div>
+<div class="hl-step-title">UPDATE</div>
+<p>修改記憶體裡的 page。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">2</div>
+<div class="hl-step-title">產生 WAL</div>
+<p>把這次修改描述成一筆 WAL record。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">3</div>
+<div class="hl-step-title">WAL 寫入 disk 並 fsync</div>
+<p>確保這筆 WAL record 已經落到永久儲存。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">4</div>
+<div class="hl-step-title">COMMIT SUCCESS</div>
+<p>此時才回覆客戶端 commit 成功。</p>
+</div>
+</div>
+
+<div class="hl-decision">
+<div class="dc-gate">
+<div class="dc-diamond">資料庫是否發生 crash？</div>
+<div class="dc-branches">
+<div class="dc-branch yes"><span class="dc-tag">YES</span><span class="dc-text">重新啟動後讀取 WAL，透過 REDO 重建尚未落盤的 data page，已 commit 的資料不會遺失。</span></div>
+<div class="dc-branch no"><span class="dc-tag">NO</span><span class="dc-text">系統持續正常運作，data page 之後再依內部排程慢慢落盤即可。</span></div>
+</div>
+</div>
+</div>
+
+<p>PostgreSQL 官方文件正是這樣描述 WAL 的作用：先確保描述修改的 WAL record 進入永久儲存，data page 不需要在每次 commit 時同步落盤。</p>
+
+</section>
+
+<section>
+<div class="hl-section-head tan">
+<div class="hl-chip">07</div>
+<h2>可調整項：synchronous_commit</h2>
+</div>
+
+<p>PostgreSQL 允許把 <code>synchronous_commit</code> 設成 <code>off</code>，流程會變成先回覆成功，稍後才由 WAL writer 補寫。</p>
+
+<div class="hl-flow">
+<div class="hl-step cond">WAL 還沒 fsync</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">先回 COMMIT SUCCESS</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">稍後由 WAL writer 補寫</div>
+</div>
+
+<div class="hl-callout danger">
+<span class="hl-icon">⚠️</span>
+<p>這時如果發生 crash，可能出現「資料庫已經回覆這筆 transaction 成功，但實際上這筆 transaction 還沒真正 durable」的落差，也就是最近幾筆 transaction 可能遺失。PostgreSQL 的設計仍然保證，即使遺失最近的 transaction，也不會因此讓資料庫變成不一致的狀態。</p>
+</div>
+
+<div class="hl-callout warn">
+<span class="hl-icon">🧨</span>
+<p>PostgreSQL 官方特別區分 <code>synchronous_commit=off</code> 與更危險的 <code>fsync=off</code>：後者在 OS 或硬體發生 crash 時，甚至可能導致無法恢復的資料損毀，兩者的風險等級並不相同。</p>
+</div>
+
+<table>
+<thead><tr><th>設定</th><th>commit 回覆時機</th><th>crash 後果</th></tr></thead>
+<tbody>
+<tr><td>預設（synchronous commit）</td><td>WAL durable 之後才回覆 success</td><td>已 commit 的 transaction 不會遺失</td></tr>
+<tr><td><code>synchronous_commit = off</code></td><td>先回覆 success，稍後才補寫 WAL</td><td>可能遺失最近幾筆 transaction，但資料庫仍保持一致</td></tr>
+<tr><td><code>fsync = off</code></td><td>連 WAL 本身都可能沒有真正落盤</td><td>OS / 硬體 crash 時可能造成不可恢復的損毀</td></tr>
+</tbody>
+</table>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+<!-- tab MySQL-->
+
+<div class="hl">
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">08</div>
+<h2>MySQL：InnoDB 的概念跟 PostgreSQL 非常像</h2>
+</div>
+
+<p>這裡特別要說 MySQL 加上 InnoDB，因為 MySQL 本身是 DBMS，實際行為會受 storage engine 影響。InnoDB 的核心機制是 Redo Log。</p>
+
+<div class="hl-steps">
+<div class="hl-stepcard">
+<div class="hl-stepnum">1</div>
+<div class="hl-step-title">UPDATE</div>
+<p>修改 buffer pool。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">2</div>
+<div class="hl-step-title">寫 redo log</div>
+<p>把修改描述寫進 redo log。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">3</div>
+<div class="hl-step-title">flush redo log</div>
+<p>把 redo log flush 到磁碟。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">4</div>
+<div class="hl-step-title">COMMIT success</div>
+<p>此時才回覆成功。</p>
+</div>
+</div>
+
+</section>
+
+<section>
+<div class="hl-section-head accent">
+<div class="hl-chip">09</div>
+<h2>可調整項：innodb_flush_log_at_trx_commit</h2>
+</div>
+
+<table>
+<thead><tr><th>設定值</th><th>行為</th><th>power loss 後果</th></tr></thead>
+<tbody>
+<tr><td><code>1</code>（預設）</td><td>每次 transaction commit 都 write log 並 flush disk 才回覆成功，這是 MySQL 官方要求的完整 ACID durability 設定</td><td>不會遺失已 commit 的 transaction</td></tr>
+<tr><td><code>2</code></td><td>commit 先 write 並回覆成功，大約每秒才真正 flush 一次</td><td>可能損失最近尚未 flush 的 transaction</td></tr>
+<tr><td><code>0</code></td><td>write 與 flush 都主要變成週期性處理</td><td>可能損失更大範圍尚未寫入的 transaction</td></tr>
+</tbody>
+</table>
+
+<div class="hl-callout info">
+<span class="hl-icon">💡</span>
+<p>對照兩套系統，可以看到相同的哲學：PostgreSQL 用 <code>WAL</code> 搭配 <code>synchronous_commit</code> 調整 durability 與效能，MySQL InnoDB 用 Redo Log 搭配 <code>innodb_flush_log_at_trx_commit</code> 調整同一件事，兩者的取捨方式非常接近。</p>
+</div>
+
+<p>另外，如果 MySQL 涉及 binary log 與 replication，官方對高 durability 的建議還包括同時設定 <code>innodb_flush_log_at_trx_commit = 1</code> 與 <code>sync_binlog = 1</code>，詳見 <a href="https://dev.mysql.com/doc/refman/8.4/en/replication-options-binary-log.html" target="_blank">MySQL 官方文件</a>。</p>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+<!-- tab SQL Server-->
+
+<div class="hl">
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">10</div>
+<h2>SQL Server：Transaction Log，本質上是同一派</h2>
+</div>
+
+<div class="hl-steps">
+<div class="hl-stepcard">
+<div class="hl-stepnum">1</div>
+<div class="hl-step-title">修改 data</div>
+<p>先在記憶體裡修改資料頁。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">2</div>
+<div class="hl-step-title">寫 Transaction Log</div>
+<p>把修改描述寫進 transaction log。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">3</div>
+<div class="hl-step-title">log flush disk</div>
+<p>確保 log 已經落到永久儲存。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">4</div>
+<div class="hl-step-title">COMMIT SUCCESS</div>
+<p>Microsoft 把這個預設行為稱為 Fully Durable Transaction。</p>
+</div>
+</div>
+
+<div class="hl-callout ok">
+<span class="hl-icon">🧭</span>
+<p>到這裡可以看出同一個 pattern：PostgreSQL 的 <code>WAL</code>、MySQL 的 Redo Log、SQL Server 的 Transaction Log，三個名稱不同，但共同的基本思想是不急著把整個 data page 寫完，而是先把「如何恢復這次 transaction」的日誌安全保存下來，再回覆成功。</p>
+</div>
+
+</section>
+
+<section>
+<div class="hl-section-head tan">
+<div class="hl-chip">11</div>
+<h2>可調整項：Delayed Durability</h2>
+</div>
+
+<p>SQL Server 也提供 Delayed Durability，開啟後流程會變成先回覆成功，log 之後才批次 flush。</p>
+
+<div class="hl-flow">
+<div class="hl-step">Transaction</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step cond">log 還停留在 memory</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">COMMIT SUCCESS</div>
+<div class="hl-arrow">→</div>
+<div class="hl-step">之後批次 flush</div>
+</div>
+
+<div class="hl-callout danger">
+<span class="hl-icon">⚠️</span>
+<p>在這種模式下，crash 發生時最近的 transaction 可能會消失。Microsoft 官方也明確表示，delayed durable transaction 要等到 transaction log 真正 flush 到 disk 之後，才算真正變成 durable。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+<!-- tab MongoDB-->
+
+<div class="hl">
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">12</div>
+<h2>MongoDB：Journal 之外，多了 Write Concern</h2>
+</div>
+
+<p>MongoDB 有 Journal 機制，概念跟 <code>WAL</code> 很像，write 之後先進 journal 再進 disk。MongoDB 官方也把 journaling 描述為用 write-ahead logging 提供 crash durability。除此之外，MongoDB 多了一個需要理解的概念：Write Concern，用來決定要等多少節點確認，才算真正完成這次寫入。</p>
+
+<table>
+<thead><tr><th>Write Concern</th><th>意義</th></tr></thead>
+<tbody>
+<tr><td><code>{ w: 1 }</code></td><td>Primary 收到寫入就先回覆 ACK</td></tr>
+<tr><td><code>{ w: "majority" }</code></td><td>等多數節點都達到要求，才回覆 ACK</td></tr>
+<tr><td><code>{ j: true }</code></td><td>要求相關 write 進入 on-disk journal 之後，才回覆 ACK</td></tr>
+</tbody>
+</table>
+
+<p>MongoDB 官方目前說明，大多數部署情境下 implicit 的預設 write concern 是 <code>{ w: "majority" }</code>。在預設 <code>writeConcernMajorityJournalDefault=true</code> 的一般 replica-set 設定中，majority acknowledgment 同時也要求 on-disk journaling，這跟早期 MongoDB 給人的刻板印象已經差很多。</p>
+
+</section>
+
+<section>
+<div class="hl-section-head accent">
+<div class="hl-chip">13</div>
+<h2>majority acknowledgment 涵蓋的失效範圍不同</h2>
+</div>
+
+<p>單機 PostgreSQL 的 <code>WAL</code> 落盤，跟 MongoDB replica set 要求 majority durable，兩者涵蓋的是不同層級的 failure model。</p>
+
+<div class="hl-swimlane">
+<div class="sl-head">Primary A</div>
+<div class="sl-head">Secondary B</div>
+<div class="sl-head red">Secondary C</div>
+<div class="sl-lane"><div class="sl-node">寫入並產生 journal</div><div class="sl-step">複製 →</div></div>
+<div class="sl-lane"><div class="sl-node">確認寫入</div></div>
+<div class="sl-lane"><div class="sl-node dim">尚未確認</div></div>
+</div>
+
+<div class="hl-callout info">
+<span class="hl-icon">💡</span>
+<p>如果只有單機的 PostgreSQL，一旦整台伺服器故障，只能靠 replication 或 backup 補救。而 MongoDB 搭配 majority write concern，即使 Primary 整台故障，只要多數節點已經確認寫入，資料仍然安全。這代表沒有「SQL durability 一定大於 NoSQL durability」這種結論，真正要問的是這次寫入要求什麼樣的 acknowledgment semantics。</p>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+<!-- tab DynamoDB-->
+
+<div class="hl">
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">14</div>
+<h2>DynamoDB：由 AWS 處理 infrastructure durability</h2>
+</div>
+
+<p>DynamoDB 是 managed distributed database，幾乎不需要思考 <code>fsync</code>、WAL file、SSD controller 或 server crash 這些細節，因為 AWS 已經把底層基礎設施抽象掉了。DynamoDB 在一個 Region 裡會自動把資料複製到三個 Availability Zone，AWS 把這件事作為其內建高 durability 設計的一部分。</p>
+
+<div class="hl-summary-grid">
+<div class="hl-box navy">
+<h4>AZ-A</h4>
+<p>其中一份資料複本。</p>
+</div>
+<div class="hl-box red">
+<h4>AZ-B</h4>
+<p>另一份資料複本。</p>
+</div>
+<div class="hl-box tan">
+<h4>AZ-C</h4>
+<p>第三份資料複本。</p>
+</div>
+</div>
+
+<p>因此這裡的 failure model 已經不只是單一硬碟壞掉，而是同時考慮 server failure、storage failure，甚至整個 AZ failure，這正是 managed distributed DB 吸引人的地方。</p>
+
+</section>
+
+<section>
+<div class="hl-section-head tan">
+<div class="hl-chip">15</div>
+<h2>durability 不等於 consistency</h2>
+</div>
+
+<div class="hl-callout warn">
+<span class="hl-icon">⚠️</span>
+<p>使用 DynamoDB 時要特別小心一件事：durability 不等於 consistency。資料已經安全保存，跟某次 read 是否立刻看到最新資料，是完全不同的兩件事。</p>
+</div>
+
+<div class="hl-summary-grid">
+<div class="hl-box navy">
+<h4>Durability</h4>
+<p>資料會不會消失。</p>
+</div>
+<div class="hl-box red">
+<h4>Consistency</h4>
+<p>目前讀到的是不是最新資料。</p>
+</div>
+<div class="hl-box tan">
+<h4>後續延伸</h4>
+<p>ACID 與 CAP 的討論會延伸這個區分。</p>
+</div>
+</div>
+
+</section>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+<!-- tab Redis-->
+
+<div class="hl">
+<div class="hl-container">
+
+<section>
+<div class="hl-section-head">
+<div class="hl-chip">16</div>
+<h2>Redis：以 RAM 為中心，Persistence 是額外機制</h2>
+</div>
+
+<p>Redis 的設計中心首先是 RAM，所以一筆 <code>SET user:1 ...</code> 只要進到記憶體就會非常快。Persistence 屬於額外機制，主要有兩種：RDB 與 AOF。</p>
+
+<h3>RDB：定期拍照式快照</h3>
+<p>RDB 比較像定期幫整個資料庫拍一次照片。</p>
+
+<div class="hl-steps">
+<div class="hl-stepcard">
+<div class="hl-stepnum">1</div>
+<div class="hl-step-title">12:00 snapshot</div>
+<p>完成一次完整快照。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">2</div>
+<div class="hl-step-title">12:05 snapshot</div>
+<p>完成下一次快照。</p>
+</div>
+<div class="hl-stepcard cond">
+<div class="hl-stepnum">3</div>
+<div class="hl-step-title">12:09 發生 crash</div>
+<p>距離上一次快照已經過了 4 分鐘。</p>
+</div>
+<div class="hl-stepcard">
+<div class="hl-stepnum">4</div>
+<div class="hl-step-title">12:10 snapshot（未能完成）</div>
+<p>這次快照還沒執行，crash 已經發生。</p>
+</div>
+</div>
+
+<div class="hl-callout danger">
+<span class="hl-icon">⚠️</span>
+<p>如果 crash 發生在 <code>12:09</code>，介於 <code>12:05</code> 快照與下一次快照之間的資料就可能遺失，因為 RDB 只保證「最近一次快照當下」的狀態，不保證快照之間的每一筆寫入。</p>
+</div>
+
+<div class="hl-evidence">
+<div class="hl-evidence-head">
+<span class="hl-tag">補充</span>
+<strong>AOF 的角色</strong>
+</div>
+<p>相較於 RDB 的定期快照，AOF 會持續記錄每一筆寫入指令，可以把資料遺失的視窗縮到更小，但需要付出額外的效能與磁碟成本，這也回到最前面提到的原則：durability 越強，代價越高，最終要依情境決定合理的取捨。</p>
+</div>
+
+</section>
+
+<footer>整理自 PostgreSQL、MySQL、SQL Server、MongoDB、DynamoDB、Redis 官方文件與社群討論</footer>
+
+</div>
+</div>
+
+<!-- endtab -->
+
+
+{% endtabs %}
