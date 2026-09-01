@@ -2,8 +2,8 @@
 title: 購物車資料結構解密：ShoppingCart 與 ShoppingCartExtendInfo
 date: 2026-08-31 11:30:00
 categories: Shopping-Cart
-top_img: https://github.com/CHI-KEKE/pics/blob/main/Codesss/Arch/ecom/Shopping-Cart/salepage-landing.png?raw=true
-cover : https://github.com/CHI-KEKE/pics/blob/main/Codesss/Arch/ecom/Shopping-Cart/salepage-landing.png?raw=true
+top_img: https://pub-d7e550ef212547d888a6e01348459946.r2.dev/ecom/shoppingcart/extendinfo-landing.png
+cover : https://pub-d7e550ef212547d888a6e01348459946.r2.dev/ecom/shoppingcart/extendinfo-landing.png
 tags:
 toc:
 toc_number:
