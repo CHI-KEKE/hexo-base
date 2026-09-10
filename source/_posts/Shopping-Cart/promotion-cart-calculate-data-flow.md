@@ -2,7 +2,9 @@
 title: Promotion Cart Calculate
 date: 2026-09-07 10:30:56
 categories: Shopping-Cart
-tags:
+top_img: https://pub-d7e550ef212547d888a6e01348459946.r2.dev/ecom/shoppingcart/promotioncalculate-landing.png
+cover : https://pub-d7e550ef212547d888a6e01348459946.r2.dev/ecom/shoppingcart/promotioncalculate-landing.png
+tags: 
 toc:
 toc_number:
 comments:
