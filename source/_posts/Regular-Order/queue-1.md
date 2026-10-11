@@ -1,5 +1,5 @@
 ---
-title: queue-1
+title: 定期購通知 Queue 設計：從雙層佇列到防重與併發控制
 date: 2026-10-08 11:42:00
 categories: Regular-Order
 top_img: https://pub-d7e550ef212547d888a6e01348459946.r2.dev/style/regular-purchase.png
@@ -12,55 +12,193 @@ tags:
 
 {% tabs time %}
 
-
-
-
 <!-- tab 需求 -->
 <style>
-.rq-needs{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;color:#1a1a2e;background:#fff;padding:28px;border-radius:10px;font-size:16px;line-height:1.8}
-.rq-needs *{box-sizing:border-box}
-#article-container .rq-needs p{color:#4a5568;margin:10px 0;line-height:1.85}
-#article-container .rq-needs h3{font-size:21px;color:#1a1a2e;line-height:1.5;margin:38px 0 20px;padding:0}
-#article-container .rq-needs h3:before{display:none}
-.rq-needs .rq-lead{font-size:24px;font-weight:700;color:#fff;line-height:1.6;background:linear-gradient(135deg,#1a1a2e,#0f3460);padding:24px 28px;border-radius:10px;margin-bottom:22px}
-.rq-needs .rq-purpose{border-left:3px solid #bd93f9;padding-left:18px;margin:22px 0 32px;color:#1a1a2e;font-weight:600}
-.rq-needs .rq-map{border-top:2px solid #e2e8f0;border-bottom:2px solid #e2e8f0}
-.rq-needs .rq-map-head,.rq-needs .rq-map-row{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);gap:16px;align-items:center}
-.rq-needs .rq-map-head{font-size:14px;color:#6272a4;padding:12px 0;background:#f8f9fa}
-.rq-needs .rq-map-row{padding:24px 0;border-top:1px solid #e2e8f0}
-.rq-needs .rq-event{border-left:3px solid var(--rq-color);padding-left:14px}
-.rq-needs .rq-title{font-size:17px;font-weight:700;color:#1a1a2e}
-.rq-needs .rq-small{font-size:14px;color:#6272a4;margin-top:5px}
-.rq-needs .rq-arrow{text-align:center;color:#868e96;font-size:25px}
-.rq-needs .rq-table-wrap{max-width:100%;display:inline-block}
-#article-container .rq-needs table{width:auto;max-width:100%;border-collapse:collapse;font-size:16px;display:table;margin:0}
-#article-container .rq-needs th{background:#f0f2f5;color:#44475a;text-align:left;padding:14px 16px;border:0;border-bottom:2px solid #dce2eb}
-#article-container .rq-needs td{background:#fff;color:#4a5568;padding:17px 16px;border:0;border-bottom:1px solid #e2e8f0;line-height:1.8}
-#article-container .rq-needs td:first-child{font-weight:600;color:#1a1a2e;width:32%}
-.rq-needs .rq-timeline{margin:26px 0 12px 10px;border-left:2px solid #dce2eb;padding-left:26px}
-.rq-needs .rq-moment{position:relative;padding:0 0 30px}
-.rq-needs .rq-moment:last-child{padding-bottom:0}
-.rq-needs .rq-moment:before{content:"";position:absolute;left:-34px;top:7px;width:14px;height:14px;border:3px solid #fff;border-radius:50%;background:var(--rq-color);box-shadow:0 0 0 1px var(--rq-color)}
-.rq-needs .rq-period{font-size:14px;color:#6272a4;margin-bottom:5px}
-.rq-needs .rq-verdict{display:inline-block;font-size:14px;font-weight:600;color:var(--rq-ink);background:var(--rq-bg);padding:2px 9px;border-radius:4px;margin-top:8px}
-@media(max-width:600px){.rq-needs{padding:16px 12px}.rq-needs .rq-lead{font-size:21px;padding:20px}.rq-needs .rq-map-head,.rq-needs .rq-map-row{grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:8px}.rq-needs .rq-title{font-size:16px}.rq-needs .rq-event{padding-left:8px}.rq-needs .rq-small{font-size:14px}.rq-needs .rq-arrow{font-size:20px}#article-container .rq-needs th,#article-container .rq-needs td{padding:13px 8px;font-size:15px}#article-container .rq-needs td:first-child{width:34%}}
+.rqa{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;color:#1a1a2e;background:#f0f2f5;padding:22px;border-radius:12px;font-size:16px;line-height:1.8;overflow:hidden}
+.rqa *{box-sizing:border-box}
+#article-container .rqa p{color:#4a5568;margin:10px 0;line-height:1.85}
+#article-container .rqa h2{font-size:22px;color:#1a1a2e;margin:34px 0 16px;padding:0 0 9px;border-bottom:2px solid #e2e8f0}
+#article-container .rqa h2:before,#article-container .rqa h3:before{display:none}
+#article-container .rqa h3{font-size:17px;color:#44475a;margin:24px 0 12px;padding:0}
+#article-container .rqa code{font-family:"Fira Code",Consolas,monospace;background:#f1f3f5;color:#d63384;padding:1px 5px;border-radius:3px;font-size:.88em;overflow-wrap:anywhere}
+.rqa-hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);color:#fff;border-radius:12px;padding:32px 36px;margin-bottom:24px;position:relative;overflow:hidden}
+.rqa-hero:after{content:"";position:absolute;width:180px;height:180px;border:1px solid rgba(189,147,249,.28);border-radius:50%;right:-70px;top:-80px}
+.rqa-hero .rqa-eyebrow{font-size:12px;letter-spacing:1.2px;color:#bd93f9;font-weight:700;margin-bottom:9px}
+#article-container .rqa .rqa-hero h1{color:#fff;font-size:27px;line-height:1.45;margin:0 0 10px}
+#article-container .rqa .rqa-hero p{color:#cdd6f4;margin:0;max-width:720px}
+.rqa-purpose{background:transparent;border-left:3px solid #bd93f9;padding:7px 0 7px 16px;margin:18px 0 28px;font-weight:700;color:#1a1a2e}
+.rqa-section-head{display:flex;align-items:center;gap:11px;margin:34px 0 16px}
+.rqa-section-chip{width:34px;height:34px;border-radius:8px;background:#f3f0ff;color:#7048e8;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none}
+.rqa-section-title{font-size:20px;font-weight:800;color:#1a1a2e}
+.rqa-card{background:#fff;border-radius:10px;padding:20px 22px;margin:14px 0;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid #868e96}
+.rqa-card.blue{border-left-color:#4dabf7}.rqa-card.green{border-left-color:#51cf66}.rqa-card.orange{border-left-color:#ff922b}.rqa-card.purple{border-left-color:#bd93f9}.rqa-card.red{border-left-color:#ff5555}.rqa-card.teal{border-left-color:#20c997}
+.rqa-card-title{font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:6px}
+.rqa-card-sub{font-size:14px;color:#6272a4}
+.rqa-grid-2,.rqa-grid-3{display:grid;gap:14px;margin:16px 0}
+.rqa-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rqa-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rqa-map{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.rqa-map-head,.rqa-map-row{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1.2fr);gap:12px;align-items:center}
+.rqa-map-head{font-size:13px;color:#6272a4;padding:12px 18px;background:#f1f3f5;font-weight:700}
+.rqa-map-row{padding:18px;border-top:1px solid #e2e8f0}
+.rqa-map-event{border-left:4px solid var(--map-color);padding-left:12px;font-weight:800;color:#1a1a2e}
+.rqa-map-arrow{text-align:center;color:#adb5bd;font-size:22px}
+.rqa-map-purpose{font-weight:700;color:#1a1a2e}
+.rqa-map-desc{font-size:14px;color:#6272a4;margin-top:2px}
+.rqa-table-scroll{overflow-x:auto;margin:16px 0 24px}
+#article-container .rqa table.rqa-table{width:auto;max-width:100%;border-collapse:collapse;background:#fff;font-size:14px;margin:0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+#article-container .rqa table.rqa-table.full{width:100%;min-width:620px}
+#article-container .rqa table.rqa-table th{background:#f1f3f5;color:#495057;text-align:left;padding:11px 14px;border:0;border-bottom:2px solid #dee2e6;font-weight:700}
+#article-container .rqa table.rqa-table td{background:#fff;color:#4a5568;padding:12px 14px;border:0;border-bottom:1px solid #f1f3f5;vertical-align:top;line-height:1.75}
+#article-container .rqa table.rqa-table tr:last-child td{border-bottom:0}
+.rqa-timeline{margin:20px 0 8px}
+.rqa-tl-row{display:grid;grid-template-columns:78px 18px minmax(0,1fr);min-height:92px}
+.rqa-tl-time{text-align:right;padding:8px 12px 0 0;color:#868e96;font-size:12px;font-weight:700}
+.rqa-tl-axis{position:relative}
+.rqa-tl-axis:before{content:"";position:absolute;left:8px;top:15px;bottom:-8px;width:2px;background:#e2e8f0}
+.rqa-tl-row:last-child .rqa-tl-axis:before{display:none}
+.rqa-tl-dot{position:absolute;left:2px;top:11px;width:14px;height:14px;border-radius:50%;background:var(--tl-color);border:3px solid #fff;box-shadow:0 0 0 1px var(--tl-color)}
+.rqa-tl-card{background:transparent;border:0;border-bottom:1px solid #dce3ed;padding:9px 4px 18px 14px;margin:0 0 10px 10px}
+.rqa-tl-title{font-weight:800;color:#1a1a2e}
+.rqa-badge{display:inline-block;font-size:12px;font-weight:700;border-radius:4px;padding:2px 8px;margin-top:7px}
+.rqa-badge.blue{background:#e7f5ff;color:#1971c2}.rqa-badge.green{background:#ebfbee;color:#2f9e44}.rqa-badge.orange{background:#fff4e6;color:#d9480f}.rqa-badge.purple{background:#f3f0ff;color:#7048e8}.rqa-badge.red{background:#fff5f5;color:#c92a2a}.rqa-badge.gray{background:#f1f3f5;color:#495057}.rqa-badge.teal{background:#e6fcf5;color:#0f9177}
+.rqa-concept{background:#fff;border-top:4px solid var(--concept-color);border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.rqa-concept-label{font-size:14px;color:#6272a4;margin-bottom:5px}
+.rqa-concept-title{font-size:17px;font-weight:800;color:#1a1a2e}
+.rqa-steps{list-style:none;padding:0;margin:18px 0;counter-reset:rqa-step}
+.rqa-steps li{position:relative;padding:7px 0 24px 48px;color:#4a5568}
+.rqa-steps li:before{counter-increment:rqa-step;content:counter(rqa-step);position:absolute;left:0;top:5px;width:30px;height:30px;background:#4dabf7;color:#fff;font-size:12px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.rqa-steps li:after{content:"";position:absolute;left:14px;top:36px;bottom:0;width:2px;background:#e2e8f0}
+.rqa-steps li:last-child:after{display:none}
+.rqa-step-title{font-weight:800;color:#1a1a2e;margin-bottom:2px}
+.rqa-step-desc{font-size:14px;color:#6272a4}
+.rqa-note{display:flex;gap:12px;background:#fff9db;border:1px solid #ffd43b;border-radius:8px;padding:14px 16px;margin:16px 0;color:#664d03}
+.rqa-note.info{background:#e7f5ff;border-color:#a5d8ff;color:#1971c2}
+.rqa-note.danger{background:#fff5f5;border-color:#ffa8a8;color:#c92a2a}
+.rqa-note.ok{background:#ebfbee;border-color:#b2f2bb;color:#2f9e44}
+.rqa-note-icon{font-size:20px;flex:none}
+.rqa-note-body{min-width:0}
+#article-container .rqa .rqa-note-body p{color:inherit;margin:0}
+.rqa-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:22px 0}
+.rqa-flow-process{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr) 22px minmax(0,1fr) 22px minmax(0,1fr)}
+.rqa-flow-process .rqa-flow-node{min-width:0}
+.rqa-flow-node{background:#fff;border:2px solid var(--node-color,#4dabf7);border-radius:8px;padding:11px 15px;min-width:135px;text-align:center;color:var(--node-ink,#1971c2);font-weight:800}
+.rqa-flow-node small{display:block;font-size:12px;color:#6272a4;font-weight:500;margin-top:4px}
+.rqa-flow-arrow{color:#adb5bd;font-size:22px;font-weight:700}
+.rqa-arch{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:18px 0}
+.rqa-arch-layer{border:2px solid var(--layer-color);background:var(--layer-bg);border-radius:10px;padding:15px;text-align:center}
+.rqa-arch-title{font-weight:800;color:var(--layer-ink);font-size:17px}
+.rqa-arch-desc{font-size:13px;color:#6272a4;margin-top:4px}
+.rqa-arch-arrow{text-align:center;color:#adb5bd;font-size:22px;line-height:1.2;padding:5px 0}
+.rqa-pill-row{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:10px}
+.rqa-pill{font-size:12px;font-weight:700;padding:4px 9px;border-radius:4px;background:#f3f0ff;color:#7048e8}
+.rqa-branch{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:18px 0}
+.rqa-branch-root{max-width:360px;margin:0 auto;background:#f3f0ff;border:2px solid #bd93f9;color:#7048e8;border-radius:28px;padding:12px 16px;text-align:center;font-weight:800}
+.rqa-branch-stem{width:2px;height:24px;background:#ced4da;margin:0 auto}
+.rqa-branch-line{height:20px;border-top:2px solid #ced4da;border-left:2px solid #ced4da;border-right:2px solid #ced4da;margin:0 12.5%}
+.rqa-branch-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.rqa-branch-node{background:#fff;border:2px solid var(--branch-color);border-radius:9px;padding:13px 10px;text-align:center;color:var(--branch-ink);font-weight:800;min-width:0}
+.rqa-branch-node small{display:block;color:#6272a4;font-weight:500;font-size:12px;margin-top:5px}
+.rqa-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}
+.rqa-compare-col{min-width:0}
+.rqa-compare-head{background:#f1f3f5;border-top:4px solid #868e96;border-radius:10px;padding:15px 17px;font-weight:800;color:#1a1a2e}
+.rqa-compare-head.modern{background:#f3f0ff;border-color:#bd93f9}
+.rqa-compare-node{position:relative;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #adb5bd;border-radius:10px;padding:15px 17px;margin-top:28px;color:#4a5568}
+.rqa-compare-node.modern{border-left-color:#bd93f9}
+.rqa-compare-node:before{content:"↓";position:absolute;top:-28px;left:calc(50% - 7px);color:#adb5bd;font-size:20px}
+.rqa-diagram{overflow-x:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin:18px 0}
+.rqa-diagram svg{display:block;width:100%;min-width:0;height:auto;font-family:"Segoe UI","Microsoft JhengHei",sans-serif}
+.rqa-caption{font-size:13px;color:#6272a4;margin:8px 0 20px}
+.rqa-summary{background:#1e1e2e;color:#cdd6f4;border-radius:10px;padding:18px 20px;margin:20px 0}
+.rqa-summary-title{color:#fff;font-weight:800;margin-bottom:10px}
+.rqa-summary ul{margin:0;padding-left:21px}
+.rqa-summary li{margin:7px 0}
+.rqa-pipeline{display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr) 34px minmax(0,1.15fr) 34px minmax(0,1fr);align-items:center;border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;padding:22px 0;margin:20px 0}
+.rqa-pipe-node{min-width:0;text-align:center;padding:12px 8px;border-top:3px solid var(--pipe-color,#4dabf7)}
+.rqa-pipe-kicker{font-size:11px;letter-spacing:.5px;color:#868e96;font-weight:700;text-transform:uppercase}
+.rqa-pipe-title{font-weight:800;color:var(--pipe-ink,#1971c2);margin:3px 0}
+.rqa-pipe-desc{font-size:12px;color:#6272a4;line-height:1.55}
+.rqa-pipe-arrow{text-align:center;color:#94a3b8;font-size:20px}
+.rqa-pipe-arrow small{display:block;font-size:10px;font-weight:700;line-height:1.2}
+.rqa-role-lines{border-top:1px solid #dce3ed;border-bottom:1px solid #dce3ed;margin:18px 0}
+.rqa-role-line{display:grid;grid-template-columns:120px 28px minmax(0,1fr);gap:8px;padding:12px 4px;border-bottom:1px dashed #dce3ed;align-items:center}
+.rqa-role-line:last-child{border-bottom:0}
+.rqa-role-label{font-weight:800;color:#1a1a2e}.rqa-role-arrow{text-align:center;color:#94a3b8}.rqa-role-desc{color:#4a5568}
+.rqa-decision{margin:22px 0;text-align:center}
+.rqa-decision-start{display:inline-block;border-bottom:3px solid #4dabf7;padding:9px 20px;font-weight:800;color:#1971c2}
+.rqa-decision-line{width:2px;height:20px;background:#cbd5e1;margin:0 auto}
+.rqa-decision-question{display:inline-flex;min-height:74px;min-width:220px;align-items:center;justify-content:center;background:#fff7ed;border:2px solid #ff922b;clip-path:polygon(12% 0,88% 0,100% 50%,88% 100%,12% 100%,0 50%);padding:14px 30px;font-weight:800;color:#d9480f}
+.rqa-decision-branches{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px;margin-top:28px}
+.rqa-decision-branches:before{content:"";position:absolute;left:25%;right:25%;top:-15px;border-top:2px solid #cbd5e1}
+.rqa-decision-path{position:relative;border-top:3px solid var(--path-color);padding:14px 8px 0;color:#4a5568}
+.rqa-decision-path:before{content:"";position:absolute;left:50%;top:-17px;height:14px;border-left:2px solid #cbd5e1}
+.rqa-decision-answer{position:absolute;left:50%;top:-38px;transform:translateX(-50%);font-size:12px;font-weight:800;color:var(--path-ink)}
+.rqa-decision-title{font-weight:800;color:var(--path-ink);margin-bottom:3px}
+.rqa-status-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;margin:16px 0 22px}
+.rqa-status-item{padding:13px 14px;border-right:1px dashed #cbd5e1;color:#4a5568}
+.rqa-status-item:last-child{border-right:0}
+.rqa-status-code{font-weight:800;color:var(--status-color);margin-bottom:3px}
+.rqa-job-key{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:16px 0 8px;color:#4a5568}
+.rqa-job-key span{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-bottom:2px solid var(--key-color);font-size:13px;font-weight:700}
+.rqa-job-meta{display:grid;gap:4px;margin-top:8px;text-align:left;font-size:12px;color:#6272a4;font-weight:500}
+.rqa-job-meta span{display:block;border-top:1px dashed #dce3ed;padding-top:4px}
+.rqa-inline-note{border-left:3px solid var(--note-color,#ff922b);padding:6px 0 6px 14px;margin:17px 0;color:#4a5568}
+.rqa-inline-note strong{color:var(--note-ink,#d9480f)}
+.rqa-conclusion{border-top:1px solid #b2f2bb;border-bottom:1px solid #b2f2bb;padding:13px 4px;margin:20px 0;color:#2f9e44;font-weight:700}
+@media(max-width:760px){.rqa{padding:14px 10px}.rqa-hero{padding:25px 20px}.rqa-grid-2,.rqa-grid-3,.rqa-branch-grid,.rqa-compare{grid-template-columns:1fr}.rqa-map-head,.rqa-map-row{grid-template-columns:minmax(0,1fr) 30px minmax(0,1.2fr);gap:5px;padding-left:10px;padding-right:10px}.rqa-branch-line{display:none}.rqa-branch-stem{height:16px}.rqa-tl-row{grid-template-columns:60px 18px minmax(0,1fr)}.rqa-flow,.rqa-flow-process{display:flex;align-items:stretch;flex-direction:column}.rqa-flow-arrow{transform:rotate(90deg);text-align:center}.rqa-pipeline{grid-template-columns:1fr;padding:12px 0}.rqa-pipe-arrow{transform:rotate(90deg);padding:2px}.rqa-pipe-arrow small{display:none}.rqa-role-line{grid-template-columns:96px 20px minmax(0,1fr)}.rqa-decision-branches{gap:18px}.rqa-status-strip{grid-template-columns:1fr}.rqa-status-item{border-right:0;border-bottom:1px dashed #cbd5e1}.rqa-status-item:last-child{border-bottom:0}.rqa-diagram svg{min-width:840px}.rqa-diagram.alt svg{min-width:860px}.rqa-diagram.race svg{min-width:760px}}
 </style>
 
-<div class="rq-needs">
-<div class="rq-lead">購買會自動發生，<br>重要的事也要主動告知。</div>
+<div class="rqa">
+<div class="rqa-hero">
+<div class="rqa-eyebrow">REGULAR PURCHASE NOTIFICATION</div>
+<h1>購買會自動發生，重要的事也要主動告知</h1>
 <p>定期購只需設定一次，之後便依週期自動建立訂單。消費者不會每次親自操作，因此需要通知，才能掌握進度與異常。</p>
-<div class="rq-purpose">在適當的時間，把正確的定期購資訊，可靠地通知需要知道的人。</div>
-<h3>發生什麼事，要讓消費者知道什麼？</h3>
-<div class="rq-map" role="group" aria-label="三種定期購事件與通知目的對照">
-<div class="rq-map-head"><div>定期購事件</div><div></div><div>通知的目的</div></div>
-<div class="rq-map-row"><div class="rq-event" style="--rq-color:#4dabf7"><div class="rq-title">即將建立訂單</div></div><div class="rq-arrow" aria-hidden="true">→</div><div><div class="rq-title">事先準備</div><div class="rq-small">確認是否需要調整。</div></div></div>
-<div class="rq-map-row"><div class="rq-event" style="--rq-color:#ff922b"><div class="rq-title">商品庫存不足</div></div><div class="rq-arrow" aria-hidden="true">→</div><div><div class="rq-title">知道購買可能受影響</div><div class="rq-small">這一期可能無法正常購買。</div></div></div>
-<div class="rq-map-row"><div class="rq-event" style="--rq-color:#ff5555"><div class="rq-title">付款或建立訂單失敗</div></div><div class="rq-arrow" aria-hidden="true">→</div><div><div class="rq-title">知道這次未完成</div><div class="rq-small">可能需要採取行動。</div></div></div>
 </div>
-<h3>通知需要做到哪些事？</h3>
-<div class="rq-table-wrap">
-<table>
-<thead><tr><th scope="col">需求</th><th scope="col">要解決的問題</th></tr></thead>
+<div class="rqa-purpose">在適當的時間，把正確的定期購資訊，可靠地通知需要知道的人。</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">01</div>
+<div class="rqa-section-title">發生什麼事，要讓消費者知道什麼？</div>
+</div>
+<div class="rqa-map" role="group" aria-label="三種定期購事件與通知目的對照">
+<div class="rqa-map-head">
+<div>定期購事件</div>
+<div></div>
+<div>通知的目的</div>
+</div>
+<div class="rqa-map-row">
+<div class="rqa-map-event" style="--map-color:#4dabf7">即將建立訂單</div>
+<div class="rqa-map-arrow" aria-hidden="true">→</div>
+<div>
+<div class="rqa-map-purpose">事先準備</div>
+<div class="rqa-map-desc">確認是否需要調整。</div>
+</div>
+</div>
+<div class="rqa-map-row">
+<div class="rqa-map-event" style="--map-color:#ff922b">商品庫存不足</div>
+<div class="rqa-map-arrow" aria-hidden="true">→</div>
+<div>
+<div class="rqa-map-purpose">知道購買可能受影響</div>
+<div class="rqa-map-desc">這一期可能無法正常購買。</div>
+</div>
+</div>
+<div class="rqa-map-row">
+<div class="rqa-map-event" style="--map-color:#ff5555">付款或建立訂單失敗</div>
+<div class="rqa-map-arrow" aria-hidden="true">→</div>
+<div>
+<div class="rqa-map-purpose">知道這次未完成</div>
+<div class="rqa-map-desc">可能需要採取行動。</div>
+</div>
+</div>
+</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">02</div>
+<div class="rqa-section-title">通知需要做到哪些事？</div>
+</div>
+<div class="rqa-table-scroll">
+<table class="rqa-table full">
+<thead>
+<tr><th>需求</th><th>要解決的問題</th></tr>
+</thead>
 <tbody>
 <tr><td>對象與內容正確</td><td>真的發生這件事，才通知對應的人。</td></tr>
 <tr><td>及時通知</td><td>需要事先知道的事，不能太晚收到。</td></tr>
@@ -72,273 +210,386 @@ tags:
 </tbody>
 </table>
 </div>
-<h3>同一件事重送，與下一期通知有何不同？</h3>
-<p>以「庫存不足通知」為例：</p>
-<div class="rq-timeline" role="group" aria-label="本期與下一期通知的時間軸範例">
-<div class="rq-moment" style="--rq-color:#4dabf7;--rq-ink:#1971c2;--rq-bg:#e7f5ff"><div class="rq-period">本期・第一次發現</div><div class="rq-title">商品庫存不足，通知消費者</div><div class="rq-verdict">需要通知</div></div>
-<div class="rq-moment" style="--rq-color:#ff922b;--rq-ink:#a84400;--rq-bg:#fff4e6"><div class="rq-period">仍是本期・系統重新執行</div><div class="rq-title">同一件事，又準備寄一次</div><div class="rq-verdict">應避免重複</div></div>
-<div class="rq-moment" style="--rq-color:#20c997;--rq-ink:#0f7562;--rq-bg:#e6fcf5"><div class="rq-period">到了下一期・再次發生</div><div class="rq-title">新的購買，又遇到庫存不足</div><div class="rq-verdict">可能是新的必要通知</div></div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">03</div>
+<div class="rqa-section-title">同一件事重送，與下一期通知有何不同？</div>
+</div>
+<p>以「庫存不足通知」為例，是否需要再次通知，不能只看通知類型，還要看它是不是同一個業務事件。</p>
+<div class="rqa-timeline" role="group" aria-label="本期與下一期通知的時間軸範例">
+<div class="rqa-tl-row">
+<div class="rqa-tl-time">本期</div>
+<div class="rqa-tl-axis"><div class="rqa-tl-dot" style="--tl-color:#4dabf7"></div></div>
+<div class="rqa-tl-card" style="--tl-color:#4dabf7">
+<div class="rqa-tl-title">第一次發現商品庫存不足，通知消費者</div>
+<div class="rqa-badge blue">需要通知</div>
+</div>
+</div>
+<div class="rqa-tl-row">
+<div class="rqa-tl-time">仍是本期</div>
+<div class="rqa-tl-axis"><div class="rqa-tl-dot" style="--tl-color:#ff922b"></div></div>
+<div class="rqa-tl-card" style="--tl-color:#ff922b">
+<div class="rqa-tl-title">系統重新執行，同一件事又準備寄一次</div>
+<div class="rqa-badge orange">應避免重複</div>
+</div>
+</div>
+<div class="rqa-tl-row">
+<div class="rqa-tl-time">下一期</div>
+<div class="rqa-tl-axis"><div class="rqa-tl-dot" style="--tl-color:#20c997"></div></div>
+<div class="rqa-tl-card" style="--tl-color:#20c997">
+<div class="rqa-tl-title">新的購買再次遇到庫存不足</div>
+<div class="rqa-badge teal">可能是新的必要通知</div>
+</div>
+</div>
 </div>
 </div>
 <!-- endtab -->
-
-
-
 
 <!-- tab 把「通知」記錄下來 -->
-
-
-我們需要一份可持續處理的通知待辦清單
-
-
-| 概念 | 主要回答的問題 |
-|---|---|
-| 發送紀錄 | 之前送了什麼？成功還是失敗？ |
-| 工作佇列（Queue） | 還有哪些通知要送？接下來取哪些來處理？ |
-| 處理順序 | 先處理最早的、最急的，還是已到發送時間的？ |
-
-
-如果只是保存發送結果，叫「通知紀錄表」就夠了，不需要稱為 Queuef，我們的定期購通知表之所以具有 Queue 的角色，是因為它參與了工作的執行
-
-
-
-產生需要發送的通知
-         ↓
-留下待處理工作
-         ↓
-發送程式取出一批
-         ↓
-成功的完成，未完成的留待後續處理
-
-
-它不只是記錄「曾經做過什麼」，也決定「還有什麼事情需要做」。至於時間順序是不是很重要，要看通知需求，不能從 Queue 這個名稱直接推定
-
-
-- 不同消費者的庫存不足通知，通常不需要嚴格保證誰先收到。
-- 同一筆定期購若先發生失敗、後來恢復正常，就需要考慮通知的先後與有效性，避免恢復後才收到過時的失敗通知。
-
-
-而且「先取出」也不等於「先收到」，中途重試或下游發送延遲，都可能改變收件順序。因此，這套設計更準確的說法是我們需要一份可持續處理的通知待辦清單；是否必須先進先出，是另一個要獨立確認的需求。
-
-
-以我們目前的設計來說，notify_queue 同時負責兩件事
-
-
-1. 通知紀錄：讓定期購能查到每筆通知的內容與狀態。
-2. 待辦清單：讓原 Job 與 Retry Job 找出還需要處理的通知。
-
-
+<div class="rqa">
+<div class="rqa-hero">
+<div class="rqa-eyebrow">QUEUE AS A DURABLE TODO LIST</div>
+<h1>需要的不只是發送紀錄，而是一份可持續處理的通知待辦清單</h1>
+<p>通知資料不只回答之前做過什麼，也要讓發送程式知道還有哪些工作尚未完成。</p>
+</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">01</div>
+<div class="rqa-section-title">通知資料如何同時成為紀錄與待辦？</div>
+</div>
+<div class="rqa-pipeline" role="group" aria-label="通知從業務事件流向 SCM 的資料生命週期">
+<div class="rqa-pipe-node" style="--pipe-color:#ff922b;--pipe-ink:#d9480f">
+<div class="rqa-pipe-kicker">觸發</div>
+<div class="rqa-pipe-title">業務事件</div>
+<div class="rqa-pipe-desc">庫存不足、建單前提醒或處理失敗</div>
+</div>
+<div class="rqa-pipe-arrow">→<small>判斷</small></div>
+<div class="rqa-pipe-node" style="--pipe-color:#bd93f9;--pipe-ink:#7048e8">
+<div class="rqa-pipe-kicker">處理</div>
+<div class="rqa-pipe-title">通知 Job</div>
+<div class="rqa-pipe-desc">找到對象，組成通知內容</div>
+</div>
+<div class="rqa-pipe-arrow">→<small>寫入</small></div>
+<div class="rqa-pipe-node" style="--pipe-color:#4dabf7;--pipe-ink:#1971c2">
+<div class="rqa-pipe-kicker">保存與待辦</div>
+<div class="rqa-pipe-title"><code>notify_queue</code></div>
+<div class="rqa-pipe-desc">保存內容、狀態與嘗試結果，提供待發與失敗通知</div>
+</div>
+<div class="rqa-pipe-arrow">→<small>發送</small></div>
+<div class="rqa-pipe-node" style="--pipe-color:#20c997;--pipe-ink:#0f9177">
+<div class="rqa-pipe-kicker">下游</div>
+<div class="rqa-pipe-title">SCM 通知 API</div>
+<div class="rqa-pipe-desc">接收通知並回傳本次處理結果</div>
+</div>
+</div>
+<p><code>notify_queue</code> 位在業務判斷與外部發送之間。如果只是保存發送結果，稱為「通知紀錄表」就足夠；它之所以具有 <code>Queue</code> 的角色，是因為它也參與工作的執行。</p>
+<div class="rqa-role-lines" role="group" aria-label="notify_queue 的兩種責任">
+<div class="rqa-role-line">
+<div class="rqa-role-label">回顧過去</div>
+<div class="rqa-role-arrow">→</div>
+<div class="rqa-role-desc"><strong>通知處理紀錄</strong>：保存之前送了什麼，以及成功或失敗。</div>
+</div>
+<div class="rqa-role-line">
+<div class="rqa-role-label">推進未來</div>
+<div class="rqa-role-arrow">→</div>
+<div class="rqa-role-desc"><strong>通知待辦清單</strong>：保存尚未完成的通知，讓原通知 Job 與 Retry Job 持續取出處理。</div>
+</div>
+</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">02</div>
+<div class="rqa-section-title">什麼情況需要在意通知順序？</div>
+</div>
+<p>處理順序可能依最早、最急或已到發送時間等需求決定，但不能從 <code>Queue</code> 這個名稱直接推定必須先進先出。</p>
+<div class="rqa-decision" role="group" aria-label="是否需要在意通知順序的判斷">
+<div class="rqa-decision-start">準備發送一筆通知</div>
+<div class="rqa-decision-line"></div>
+<div class="rqa-decision-question">是否屬於同一筆定期購？</div>
+<div class="rqa-decision-branches">
+<div class="rqa-decision-path" style="--path-color:#4dabf7;--path-ink:#1971c2">
+<div class="rqa-decision-answer">否</div>
+<div class="rqa-decision-title">不同消費者之間</div>
+<div>通常不需要嚴格保證誰先收到。</div>
+</div>
+<div class="rqa-decision-path" style="--path-color:#ff922b;--path-ink:#d9480f">
+<div class="rqa-decision-answer">是</div>
+<div class="rqa-decision-title">同一筆定期購之內</div>
+<div>檢查後來狀態是否讓舊通知失效，避免恢復後才收到過時的失敗通知。</div>
+</div>
+</div>
+</div>
+<div class="rqa-inline-note" style="--note-color:#bd93f9;--note-ink:#7048e8"><strong>先取出不等於先收到。</strong>中途重試或下游發送延遲，都可能改變收件順序；是否必須先進先出，需要獨立確認。</div>
+</div>
 <!-- endtab -->
-
-
 
 <!-- tab 雙層 Queue -->
-
-
-公司有一個 Message Queue 系統，為大家共用的系統，較難追蹤個別服務自己的通知狀態，因此我們也獨立設計了一個自己的 queue 表
-
-
-NMQ：排的是「要執行的 Job」
-  │
-  └─ 執行通知 Job
-       │
-       ├─ 找出需要通知的對象
-       ├─ 寫入 notify_queue
-       └─ 取出通知並發送
-
-notify_queue 排的是「每一筆待發通知」
-
-
-
-| | NMQ | `notify_queue` 表 |
-|---|---|---|
-| 工作單位 | 一次 Job 任務 | 一筆通知 |
-| 例如 | 執行一次庫存通知 Job | 寄給某位消費者的庫存不足通知 |
-| 關心的進度 | Job 是否執行完成 | 各筆通知是否發送成功 |
-| 重試的範圍 | 重新執行 Job | 補送符合條件的個別通知 |
-
-
-
-
-## 第一層：NMQ，安排 Job 執行
-
-
-NMQ 是大家共用的中央 Queue 系統。定期購排程會透過它，安排執行通知相關 Job，例如
-
-
-- 庫存不足通知 Job
-- 訂單建立前通知 Job
-- 訂單失敗通知 Job
-- 補送通知的 Retry Job
-
-
-這一層的工作單位是一次 Job 任務。它關心的是這次任務有沒有被執行，以及執行成功或失敗
-
-
-
-
-## 第二層：notify_queue，管理每筆通知
-
-
-通知 Job 找出需要通知的對象後，會把通知寫入定期購自己的 notify_queue 表。這一層的工作單位是一筆通知，例如「某位消費者這一期的庫存不足通知」。
-
-
-
-
-| 角色 | 用途 |
-|---|---|
-| 通知待辦清單 | 找出尚未發送或需要重試的通知 |
-| 通知處理紀錄 | 查詢通知內容、發送狀態與嘗試紀錄 |
-
-
-
-中央 NMQ 對我們而言，缺少能直接查證的任務進度。事後不只難確認是否執行，連任務有沒有成功進入排隊，都不容易確定，因此，當某位消費者沒有收到通知時，只靠 NMQ，我們很難區分
-
-
-任務沒有成功排入？
-        ↓
-已排入，但還沒執行？
-        ↓
-已執行，但沒有產生通知？
-        ↓
-已產生通知，但發送失敗？
-
-
-
-自己的 notify_queue 表，提供了一個能由定期購自行查詢的通知處理依據，NMQ 負責安排 Job 執行，但我們對這段過程的可見度有限。自己的通知表則從「通知已產生」開始，保存可查詢、可補送的處理進
-
-
+<div class="rqa">
+<div class="rqa-hero">
+<div class="rqa-eyebrow">TWO QUEUES, TWO WORK UNITS</div>
+<h1>NMQ 安排 Job，<code>notify_queue</code> 管理每一筆通知</h1>
+<p>公司已有共用的 Message Queue 系統，但中央系統不容易直接呈現定期購服務內每一筆通知的狀態，因此仍需要自己的通知佇列表。</p>
+</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">01</div>
+<div class="rqa-section-title">從排程到發送，用四個檢查點定位問題</div>
+</div>
+<div class="rqa-pipeline" role="group" aria-label="NMQ 到 SCM 的四個故障定位檢查點">
+<div class="rqa-pipe-node" style="--pipe-color:#bd93f9;--pipe-ink:#7048e8">
+<div class="rqa-pipe-kicker">檢查點 01</div>
+<div class="rqa-pipe-title">NMQ</div>
+<div class="rqa-pipe-desc">Job 是否成功排入，或仍在中央 Queue 等待</div>
+</div>
+<div class="rqa-pipe-arrow">→<small>安排執行</small></div>
+<div class="rqa-pipe-node" style="--pipe-color:#ff922b;--pipe-ink:#d9480f">
+<div class="rqa-pipe-kicker">檢查點 02</div>
+<div class="rqa-pipe-title">通知 Job</div>
+<div class="rqa-pipe-desc">是否已執行、找到對象並準備通知</div>
+</div>
+<div class="rqa-pipe-arrow">→<small>建立待辦</small></div>
+<div class="rqa-pipe-node" style="--pipe-color:#4dabf7;--pipe-ink:#1971c2">
+<div class="rqa-pipe-kicker">檢查點 03</div>
+<div class="rqa-pipe-title"><code>notify_queue</code></div>
+<div class="rqa-pipe-desc">通知是否產生、目前狀態與補送依據</div>
+</div>
+<div class="rqa-pipe-arrow">→<small>呼叫 API</small></div>
+<div class="rqa-pipe-node" style="--pipe-color:#20c997;--pipe-ink:#0f9177">
+<div class="rqa-pipe-kicker">檢查點 04</div>
+<div class="rqa-pipe-title">SCM 通知 API</div>
+<div class="rqa-pipe-desc">是否接受通知並回傳本次處理結果</div>
+</div>
+</div>
+<p>NMQ 負責安排 Job 執行，但定期購對中央排隊過程的可見度有限。自己的通知表從「通知已產生」開始，保存可查詢與可補送的處理進度。</p>
+<div class="rqa-table-scroll">
+<table class="rqa-table full">
+<thead>
+<tr><th>比較面向</th><th>NMQ</th><th><code>notify_queue</code> 表</th></tr>
+</thead>
+<tbody>
+<tr><td>工作單位</td><td>一次 Job 任務</td><td>一筆通知</td></tr>
+<tr><td>例如</td><td>執行一次庫存通知 Job</td><td>寄給某位消費者的庫存不足通知</td></tr>
+<tr><td>關心的進度</td><td>Job 是否執行完成</td><td>各筆通知是否發送成功</td></tr>
+<tr><td>重試的範圍</td><td>重新執行 Job</td><td>補送符合條件的個別通知</td></tr>
+</tbody>
+</table>
+</div>
+</div>
 <!-- endtab -->
 
-
-
-
-<!-- tab 不同通知要拆成不同 Job-->
-
-
-因為不同通知的執行時間、判斷條件與通知內容都不同
-
-
-| 通知 | 需要判斷的事情 |
-|---|---|
-| 庫存不足通知 | 哪些定期購商品庫存不足，需要提醒 |
-| 訂單建立前通知 | 哪些定期購即將建立下一期訂單 |
-| 訂單失敗通知 | 哪些定期購發生需要通知的失敗 |
-
-
-
-各自獨立後，每支 Job 的業務目的比較清楚，也能分別安排排程、調整條件和追查問題。例如看到 Stock Notify Job，就知道這次執行是要處理庫存不足通知。
-
-
-
+<!-- tab 不同通知要拆成不同 Job -->
+<div class="rqa">
+<div class="rqa-hero">
+<div class="rqa-eyebrow">ONE PURPOSE PER JOB</div>
+<h1>不同通知拆成不同 Job，讓時間、條件與內容各自清楚</h1>
+<p>庫存提醒、建立訂單前提醒與失敗通知不是同一種工作。它們需要不同排程、不同查詢條件，也產生不同內容。</p>
+</div>
+<div class="rqa-job-key" aria-label="拆分通知 Job 的三個判斷面向"><span style="--key-color:#4dabf7">◷ 執行時機</span><span style="--key-color:#bd93f9">◇ 判斷條件</span><span style="--key-color:#20c997">→ 通知內容</span></div>
+<p>有些通知需要事前提醒，有些只能在失敗發生後建立。每種通知查詢的資料與業務條件不同，通知對象、內容與下游 API 也需要依目的分開組裝，不應藏在同一支大型 Job 裡。</p>
+<div class="rqa-branch" role="group" aria-label="NMQ 分流到四種通知工作">
+<div class="rqa-branch-root">NMQ 排程與事件觸發</div>
+<div class="rqa-branch-stem"></div>
+<div class="rqa-branch-line"></div>
+<div class="rqa-branch-grid">
+<div class="rqa-branch-node" style="--branch-color:#20c997;--branch-ink:#0f9177">庫存通知 Job<div class="rqa-job-meta"><span>◷ 未來庫存檢查</span><span>◇ 哪些商品庫存不足</span><span>→ <code>StockNotify</code></span></div></div>
+<div class="rqa-branch-node" style="--branch-color:#4dabf7;--branch-ink:#1971c2">建單前通知 Job<div class="rqa-job-meta"><span>◷ 下一期訂單建立前</span><span>◇ 哪些定期購即將建單</span><span>→ 建單前通知</span></div></div>
+<div class="rqa-branch-node" style="--branch-color:#ff5555;--branch-ink:#c92a2a">失敗通知 Job<div class="rqa-job-meta"><span>◷ 付款或建單失敗後</span><span>◇ 哪些失敗需要通知</span><span>→ 失敗通知</span></div></div>
+<div class="rqa-branch-node" style="--branch-color:#bd93f9;--branch-ink:#7048e8">Retry Job<div class="rqa-job-meta"><span>↻ 後續補送</span><span>◇ 只處理既有失敗通知</span><span>→ 不建立新 Queue</span></div></div>
+</div>
+</div>
+<div class="rqa-conclusion">各自獨立後，每支 Job 的業務目的更清楚，也能分別安排排程、調整條件和追查問題。看到 <code>RegularOrderStockNotifyJob</code>，便能直接辨識這次執行要處理庫存通知。</div>
+</div>
 <!-- endtab -->
-
-
-
 
 <!-- tab 重複發送問題 -->
-
-
-
-
-## 同一個 Job 重做，會不會造成重複
-
-
-首先第一個問題是，：再次執行時，怎麼辨認這筆通知其實已送出？
-
-，在塞 Queue 前，可以先查「今天是否已經為同一個通知對象建立過同類通知」，有就略過。這是在防止重複建立通知
-
-
-如果只記錄「今天 Job 執行過」，後面 70 筆就可能被一起跳過。
-
-
-| 通知 | 「今天建立過」的查詢條件 |
-|---|---|
-| 庫存彙總通知 | 商店＋通知類型＋通知日期 |
-| 訂單建立前／失敗通知 | 定期購訂單＋通知類型＋通知日期 |
-
-
-不過，「通知日期」最好是這次通知所屬的業務日期，而不是程式當下的日期。例如 10/9 補跑 10/8 的任務，應該仍判斷 10/8 的通知是否已存在，否則會再建立一次
-
-
-
-| Job | 建立的通知類型 | 用什麼條件判斷已建立過？ | 查到後的處理 |
-|---|---|---|---|
-| `RegularOrderStockNotifyJob` | `StockNotify` 庫存通知 | **商店 ID ＋ 通知類型** | 跳過該商店，不新增 |
-| `RegularCreateOrderNotifyJob` | `CreditCardOrderNotify`、`CashOnDeliveryOrderNotify` | **定期購訂單 ID ＋ 通知類型** | 跳過該筆通知，不新增 |
-| `RegularOrderFailedNotifyJob` | `CreditCardFailedNotify`、`CreateFailedNotify` | **定期購訂單 ID ＋ 通知類型** | 跳過該筆通知，不新增 |
-| `RegularOrderUnsubscribeNotifyJob` | `UnsubscribeNotify` 取消訂閱通知 | **商店 ID ＋ 訂單 ID ＋ 通知類型** | 沿用既有 queue，不新增 |
-| `RegularNotifyQueueRetryJob` | 處理既有通知 | 不適用：**不負責新增 queue** | 撈取既有 queue 發送、更新狀態 |
-
-
-再次執行時，怎麼辨認這筆通知其實已送出？
-
-
-
-目前 Job 是靠 queue 的成功狀態，辨認這筆通知已經送出。但「SCM 接受通知」與「我們記下成功」是兩個分開的動作
-
-
-
-| 第一次執行停在哪裡？ | 再次執行時看到什麼？ | 結果 |
-|---|---|---|
-| SCM 接受，且成功回寫 `status = 1` | 這筆已成功 | 不會再撈取發送 |
-| SCM 接受，但尚未回寫就中斷 | 仍是 `0` 或原本的 `2` | 仍可能再次發送 |
-
-
-
-撈到 queue → SCM 接受通知 → 💥 程式中斷 → 未回寫成功
-                                              ↓
-                               下次看到未完成，再送一次
-
-
-要解決這個空隙，需要 SCM 一起協助。常見方式是給每筆通知一個固定的發送識別碼
-
-
-第一次：發送識別碼 A → SCM 接受並記錄 A
-再次送：發送識別碼 A → SCM 發現已處理，回覆結果，不再建立第二次發送
-
-
-例如可以評估使用 queue PK，但前提是 SCM 支援以這個識別碼防重，而且識別碼的範圍與保存時間足夠；單純把 PK 傳過去，並不會自動產生防重效果。
-
-
-
-
-## 兩個不同的 Job，有沒有機會建立同一個通知，或發送同一筆 queue
-
-
-
-如果兩個 Job 都可能處理同一筆 queue，就需要一個「同一時間只允許其中一個處理」的機制。鎖是其中一種做法。
-重點是，「查到可以處理」和「取得處理權」必須一起完成。不能兩邊都先查到資料，準備發送時才各自標記。
-
-
-
-如果兩個 Job 都可能處理同一筆 queue，就需要一個「同一時間只允許其中一個處理」的機制。鎖是其中一種做法。
-重點是，「查到可以處理」和「取得處理權」必須一起完成。不能兩邊都先查到資料，準備發送時才各自標記。
-以你們的通知發送，可以有兩種粒度：
-做法	原理	適合情境
-整批鎖	Job 先取得某個通知類型的鎖，才能撈取、發送、回寫；另一個拿不到就跳過	改動較少，同類通知一次由一個 Job 處理
-逐筆領取	Job 原子地將某筆 queue 標記為自己處理中，其他 Job 只能領取別筆	需要多個 Job 平行發送、提高處理量
-
-
-
-「整批依照通知類型鎖」，概念就是：
-Job A：取得 StockNotify 的鎖
-       → 撈 queue → 發送 → 回寫 → 釋放鎖
-
-Job B：拿不到 StockNotify 的鎖
-       → 這次跳過，留待下次執行
-
-
-這個鎖必須是不同 Pod 都能共用的鎖，例如 PostgreSQL advisory lock；單純 C# lock 無法協調不同 Pod。兩個 Job 也必須遵守同一套鎖定規則，而且鎖要涵蓋整段「撈取到回寫」，才能避免重疊發送。
-
-
-
-
-
+<div class="rqa">
+<div class="rqa-hero">
+<div class="rqa-eyebrow">DUPLICATION AND CONCURRENCY</div>
+<h1>重複建立、重複發送與同時處理，是三個不同問題</h1>
+<p>同一支 Job 再次執行、SCM 已接收但狀態尚未回寫，以及兩支 Job 同時撈取，都可能造成重複，但需要在不同邊界處理。</p>
+</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">01</div>
+<div class="rqa-section-title">同一個 Job 重做，如何避免重複建立？</div>
+</div>
+<p>在寫入 <code>notify_queue</code> 前，需要先用一組能代表業務事件的條件查詢。查到相同事件已建立時，就略過這筆，而不是只記錄「今天 Job 執行過」。如果只記錄整支 Job 已執行，後面 70 筆通知可能一起被跳過。</p>
+<div class="rqa-decision" role="group" aria-label="通知建立前的防重決策樹">
+<div class="rqa-decision-start">Job 找到通知對象，組成業務識別條件</div>
+<div class="rqa-decision-line"></div>
+<div class="rqa-decision-question">相同業務事件已建立？</div>
+<div class="rqa-decision-branches">
+<div class="rqa-decision-path" style="--path-color:#ff922b;--path-ink:#d9480f">
+<div class="rqa-decision-answer">是</div>
+<div class="rqa-decision-title">略過或沿用既有 Queue</div>
+<div>不再建立相同通知。</div>
+</div>
+<div class="rqa-decision-path" style="--path-color:#20c997;--path-ink:#0f9177">
+<div class="rqa-decision-answer">否</div>
+<div class="rqa-decision-title">建立新的 Queue</div>
+<div>保存這次業務事件的通知。</div>
+</div>
+</div>
+</div>
+<div class="rqa-table-scroll">
+<table class="rqa-table full">
+<thead>
+<tr><th>Job</th><th>建立的通知類型</th><th>目前用來判斷已建立的條件</th><th>查到後的處理</th></tr>
+</thead>
+<tbody>
+<tr><td><code>RegularOrderStockNotifyJob</code></td><td><code>StockNotify</code></td><td>商店 ID ＋ 通知類型</td><td>跳過該商店，不新增。</td></tr>
+<tr><td><code>RegularCreateOrderNotifyJob</code></td><td><code>CreditCardOrderNotify</code>、<code>CashOnDeliveryOrderNotify</code></td><td>定期購訂單 ID ＋ 通知類型</td><td>跳過該筆通知，不新增。</td></tr>
+<tr><td><code>RegularOrderFailedNotifyJob</code></td><td><code>CreditCardFailedNotify</code>、<code>CreateFailedNotify</code></td><td>定期購訂單 ID ＋ 通知類型</td><td>跳過該筆通知，不新增。</td></tr>
+<tr><td><code>RegularOrderUnsubscribeNotifyJob</code></td><td><code>UnsubscribeNotify</code></td><td>商店 ID ＋訂單 ID ＋通知類型</td><td>沿用既有 Queue，不新增。</td></tr>
+<tr><td><code>RegularNotifyQueueRetryJob</code></td><td>處理既有通知</td><td>不適用，不負責新增 Queue。</td><td>撈取既有 Queue 發送並更新狀態。</td></tr>
+</tbody>
+</table>
+</div>
+<div class="rqa-inline-note"><strong>業務日期必須跟著通知事件。</strong>例如 10/9 補跑 10/8 的任務，仍應判斷 10/8 的通知是否存在。現有 Job 條件表沒有日期欄位，因此是否需要把業務日期納入識別鍵，仍要依同一筆 reference 在不同週期是否需要再次通知來確認。</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">02</div>
+<div class="rqa-section-title">SCM 已接受，但成功狀態尚未回寫</div>
+</div>
+<p>目前架構文件使用 <code>nq_send_status</code> 表示通知處理進度，原通知 Job 與 Retry Job 依狀態分工。</p>
+<div class="rqa-status-strip" role="group" aria-label="通知 Queue 的三種發送狀態">
+<div class="rqa-status-item"><div class="rqa-status-code" style="--status-color:#1971c2">0｜待發</div><div>由原通知 Job 處理。</div></div>
+<div class="rqa-status-item"><div class="rqa-status-code" style="--status-color:#c92a2a">2｜失敗</div><div>由 Retry Job 處理。</div></div>
+<div class="rqa-status-item"><div class="rqa-status-code" style="--status-color:#0f9177">1｜成功</div><div>SCM 通知 API 回報成功，不代表收件者已實際收到。</div></div>
+</div>
+<div class="rqa-diagram alt">
+<svg viewBox="0 0 900 760" role="img" aria-labelledby="rqa-seq-title rqa-seq-desc">
+<title id="rqa-seq-title">SCM 接受通知後的正常與中斷分支時序圖</title>
+<desc id="rqa-seq-desc">通知 Job 讀取 Queue 並呼叫 SCM。正常分支會回寫成功狀態，下次不再撈取；中斷分支在回寫前停止，Queue 仍是未完成狀態，下次可能使用相同識別碼再次發送。</desc>
+<defs>
+<marker id="rqa-seq-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#64748b"></path></marker>
+<marker id="rqa-seq-arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#0f9177"></path></marker>
+<marker id="rqa-seq-arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#c92a2a"></path></marker>
+</defs>
+<rect x="50" y="24" width="190" height="52" rx="9" fill="#f3f0ff" stroke="#bd93f9" stroke-width="2"></rect>
+<rect x="355" y="24" width="190" height="52" rx="9" fill="#e7f5ff" stroke="#4dabf7" stroke-width="2"></rect>
+<rect x="660" y="24" width="190" height="52" rx="9" fill="#e6fcf5" stroke="#20c997" stroke-width="2"></rect>
+<text x="145" y="56" text-anchor="middle" font-size="17" font-weight="700" fill="#7048e8">通知 Job</text>
+<text x="450" y="56" text-anchor="middle" font-size="17" font-weight="700" fill="#1971c2">notify_queue</text>
+<text x="755" y="56" text-anchor="middle" font-size="17" font-weight="700" fill="#0f9177">SCM 通知 API</text>
+<g stroke="#cbd5e1" stroke-width="2" stroke-dasharray="7 7">
+<line x1="145" y1="76" x2="145" y2="716"></line>
+<line x1="450" y1="76" x2="450" y2="716"></line>
+<line x1="755" y1="76" x2="755" y2="716"></line>
+</g>
+<g fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#rqa-seq-arrow)">
+<line x1="145" y1="126" x2="440" y2="126"></line>
+<line x1="450" y1="174" x2="155" y2="174" stroke-dasharray="6 5"></line>
+<line x1="145" y1="226" x2="745" y2="226"></line>
+<line x1="755" y1="274" x2="155" y2="274" stroke-dasharray="6 5"></line>
+</g>
+<g fill="#475569" font-size="14">
+<text x="292" y="115" text-anchor="middle">讀取 status 0 或 2</text>
+<text x="292" y="163" text-anchor="middle">回傳 Queue 與固定識別碼 A</text>
+<text x="450" y="215" text-anchor="middle">發送 A 與通知內容</text>
+<text x="450" y="263" text-anchor="middle">SCM 接受通知</text>
+</g>
+<rect x="38" y="306" width="824" height="180" rx="10" fill="#f8fffB" stroke="#20c997" stroke-width="2"></rect>
+<rect x="38" y="306" width="116" height="31" rx="8" fill="#20c997"></rect>
+<text x="96" y="327" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">正常完成</text>
+<g fill="none" stroke="#0f9177" stroke-width="2" marker-end="url(#rqa-seq-arrow-green)">
+<line x1="145" y1="367" x2="440" y2="367"></line>
+<line x1="450" y1="429" x2="155" y2="429" stroke-dasharray="6 5"></line>
+</g>
+<g fill="#0f9177" font-size="14">
+<text x="292" y="356" text-anchor="middle">回寫 status = 1</text>
+<text x="292" y="418" text-anchor="middle">下次不再撈取</text>
+</g>
+<rect x="38" y="506" width="824" height="182" rx="10" fill="#fff8f8" stroke="#ff5555" stroke-width="2"></rect>
+<rect x="38" y="506" width="146" height="31" rx="8" fill="#ff5555"></rect>
+<text x="111" y="527" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">回寫前中斷</text>
+<text x="450" y="570" text-anchor="middle" font-size="14" font-weight="700" fill="#c92a2a">Queue 仍是 status 0 或 2，SCM 卻可能已建立通知</text>
+<g fill="none" stroke="#c92a2a" stroke-width="2" marker-end="url(#rqa-seq-arrow-red)">
+<line x1="145" y1="612" x2="440" y2="612"></line>
+<line x1="145" y1="655" x2="745" y2="655"></line>
+</g>
+<g fill="#c92a2a" font-size="14">
+<text x="292" y="601" text-anchor="middle">下次再次讀到未完成狀態</text>
+<text x="450" y="644" text-anchor="middle">使用同一個識別碼 A 再送一次</text>
+</g>
+<rect x="222" y="704" width="456" height="36" rx="8" fill="#f3f0ff" stroke="#bd93f9"></rect>
+<text x="450" y="727" text-anchor="middle" font-size="13" font-weight="700" fill="#7048e8">SCM 也要記錄並辨認 A，才能在下游防重</text>
+</svg>
+</div>
+<div class="rqa-caption">時間由上往下。SCM 接受與本地回寫是兩個動作，中間的中斷空隙無法只靠本地狀態完全消除。</div>
+<div class="rqa-inline-note" style="--note-color:#bd93f9;--note-ink:#7048e8"><strong>跨系統冪等提案：</strong>可以評估使用 Queue PK 作為固定發送識別碼，但 SCM 必須支援以此識別碼防重，而且識別碼的範圍與保存時間要足夠。單純傳送 Queue PK 不會自動產生冪等效果。</div>
+<div class="rqa-section-head">
+<div class="rqa-section-chip">03</div>
+<div class="rqa-section-title">兩個 Job 同時處理同一筆 Queue</div>
+</div>
+<p>如果兩個 Job 都可能處理同一筆 Queue，就需要「同一時間只允許其中一個取得處理權」的機制。重點是，查到可以處理與取得處理權必須一起完成，不能兩邊都先查到資料，準備發送時才各自標記。</p>
+<div class="rqa-table-scroll">
+<table class="rqa-table full">
+<thead>
+<tr><th>比較面向</th><th>整批鎖</th><th>逐筆領取</th></tr>
+</thead>
+<tbody>
+<tr><td>鎖定粒度</td><td>以通知類型為單位，例如 <code>StockNotify</code>。</td><td>以單筆 Queue 為單位。</td></tr>
+<tr><td>可否平行</td><td>同類型一次只由一個 Job 處理。</td><td>多個 Job 可同時處理不同 Queue。</td></tr>
+<tr><td>實作方式</td><td>先取得跨 Pod 的類型鎖，再撈取、發送與回寫。</td><td>由資料庫原子地領取尚未被其他執行者取得的 Queue。</td></tr>
+<tr><td>適合情境</td><td>希望改動較少，先避免同類處理範圍重疊。</td><td>需要平行發送並提高整體處理量。</td></tr>
+</tbody>
+</table>
+</div>
+<div class="rqa-diagram race">
+<svg viewBox="0 0 900 560" role="img" aria-labelledby="rqa-lock-title rqa-lock-desc">
+<title id="rqa-lock-title">通知類型整批鎖設計提案</title>
+<desc id="rqa-lock-desc">Job A 先取得 StockNotify 的跨 Pod 鎖。Job B 同時嘗試取得相同鎖時失敗，因此略過本輪。Job A 在鎖的範圍內完成撈取 Queue、發送與回寫，最後釋放鎖。</desc>
+<defs>
+<marker id="rqa-lock-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#64748b"></path></marker>
+<marker id="rqa-lock-arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#0f9177"></path></marker>
+<marker id="rqa-lock-arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#c92a2a"></path></marker>
+</defs>
+<text x="450" y="25" text-anchor="middle" font-size="14" font-weight="700" fill="#7048e8">整批鎖設計提案</text>
+<rect x="55" y="42" width="180" height="50" rx="9" fill="#e7f5ff" stroke="#4dabf7" stroke-width="2"></rect>
+<rect x="355" y="42" width="190" height="50" rx="9" fill="#f3f0ff" stroke="#bd93f9" stroke-width="2"></rect>
+<rect x="665" y="42" width="180" height="50" rx="9" fill="#fff5f5" stroke="#ff5555" stroke-width="2"></rect>
+<text x="145" y="73" text-anchor="middle" font-size="17" font-weight="700" fill="#1971c2">Job A</text>
+<text x="450" y="73" text-anchor="middle" font-size="17" font-weight="700" fill="#7048e8">跨 Pod 鎖</text>
+<text x="755" y="73" text-anchor="middle" font-size="17" font-weight="700" fill="#c92a2a">Job B</text>
+<g stroke="#cbd5e1" stroke-width="2" stroke-dasharray="7 7">
+<line x1="145" y1="92" x2="145" y2="520"></line>
+<line x1="450" y1="92" x2="450" y2="520"></line>
+<line x1="755" y1="92" x2="755" y2="520"></line>
+</g>
+<g fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#rqa-lock-arrow)">
+<line x1="145" y1="140" x2="440" y2="140"></line>
+<line x1="755" y1="250" x2="460" y2="250"></line>
+</g>
+<g fill="none" stroke="#0f9177" stroke-width="2" marker-end="url(#rqa-lock-arrow-green)">
+<line x1="450" y1="190" x2="155" y2="190" stroke-dasharray="6 5"></line>
+<line x1="145" y1="463" x2="440" y2="463"></line>
+</g>
+<g fill="none" stroke="#c92a2a" stroke-width="2" marker-end="url(#rqa-lock-arrow-red)">
+<line x1="450" y1="300" x2="745" y2="300" stroke-dasharray="6 5"></line>
+</g>
+<g fill="#475569" font-size="14">
+<text x="292" y="129" text-anchor="middle">取得 StockNotify 鎖</text>
+<text x="603" y="239" text-anchor="middle">嘗試取得相同鎖</text>
+</g>
+<text x="292" y="179" text-anchor="middle" font-size="14" font-weight="700" fill="#0f9177">取得成功</text>
+<text x="603" y="289" text-anchor="middle" font-size="14" font-weight="700" fill="#c92a2a">未取得，本輪略過</text>
+<rect x="63" y="333" width="164" height="88" rx="9" fill="#f8fafc" stroke="#4dabf7" stroke-width="2"></rect>
+<text x="145" y="359" text-anchor="middle" font-size="14" font-weight="700" fill="#1971c2">鎖定範圍</text>
+<text x="145" y="383" text-anchor="middle" font-size="13" fill="#475569">撈取 Queue → 發送</text>
+<text x="145" y="405" text-anchor="middle" font-size="13" fill="#475569">→ 回寫處理結果</text>
+<text x="292" y="452" text-anchor="middle" font-size="14" fill="#0f9177">完成後釋放鎖</text>
+<rect x="245" y="500" width="410" height="38" rx="8" fill="#f3f0ff" stroke="#bd93f9"></rect>
+<text x="450" y="524" text-anchor="middle" font-size="13" font-weight="700" fill="#7048e8">同類型的處理範圍不會重疊</text>
+</svg>
+</div>
+<div class="rqa-inline-note" style="--note-color:#ff5555;--note-ink:#c92a2a"><strong>設計邊界：</strong>鎖必須涵蓋「撈取、發送、回寫」，且所有 Job 都遵守同一規則。鎖也必須能跨 Pod 共用，例如 PostgreSQL advisory lock；C# <code>lock</code> 無法協調不同 Pod。這是待評估的設計提案，不代表現況已採用。</div>
+<div class="rqa-table-scroll">
+<table class="rqa-table full">
+<thead>
+<tr><th>問題</th><th>需要保護的邊界</th></tr>
+</thead>
+<tbody>
+<tr><td>重複建立 Queue</td><td>業務事件識別條件，必要時搭配唯一約束。</td></tr>
+<tr><td>SCM 已接受後重送</td><td>下游也支援固定發送識別碼與冪等處理。</td></tr>
+<tr><td>多個 Job 同時處理</td><td>跨 Pod 的分散式鎖，或資料庫原子領取。</td></tr>
+</tbody>
+</table>
+</div>
+</div>
 <!-- endtab -->
-
-
-
-
 
 {% endtabs %}
