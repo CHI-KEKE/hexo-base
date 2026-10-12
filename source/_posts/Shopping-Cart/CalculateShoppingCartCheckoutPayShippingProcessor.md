@@ -1,0 +1,1459 @@
+---
+title: CalculateShoppingCartCheckoutPayShippingProcessor
+date: 2026-10-12 10:00:00
+categories: Shopping-Cart
+top_img: https://pub-d7e550ef212547d888a6e01348459946.r2.dev/ecom/shoppingcart/pay-delivery.png
+cover: https://pub-d7e550ef212547d888a6e01348459946.r2.dev/ecom/shoppingcart/pay-delivery.png
+tags:
+toc: true
+toc_number: false
+comments: true
+---
+
+{% tabs shopping-cart-checkout-pay-shipping %}
+
+<!-- tab 01．處理什麼問題 -->
+
+<style>
+#article-container .cps-paper{--ink:#1f2430;--sub:#5b6472;--line:#ece7dc;--card:#fff;background:#fbf9f4;color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:24px;font-family:"Segoe UI","Microsoft JhengHei",sans-serif;line-height:1.85;}
+#article-container .cps-paper *{box-sizing:border-box;}
+#article-container .cps-paper p{color:var(--sub);margin:12px 0;}
+#article-container .cps-paper strong{color:var(--ink);}
+#article-container .cps-paper code{color:#92502c;background:#f3ece0;padding:2px 5px;border-radius:4px;white-space:normal;overflow-wrap:anywhere;word-break:break-word;}
+#article-container .cps-paper h2,#article-container .cps-paper h3,#article-container .cps-paper h4{color:var(--ink);line-height:1.5;}
+#article-container .cps-paper h2{font-size:1.5rem;margin:8px 0 12px;}
+#article-container .cps-paper h3{font-size:1.15rem;margin:26px 0 14px;padding-left:12px;border-left:4px solid #f08b60;}
+#article-container .cps-hero{padding:20px 24px;border-radius:16px;background:linear-gradient(120deg,#fff0df,#fffaf4 75%);border:1px solid #f3dfc8;}
+#article-container .cps-eyebrow{font-size:.82rem;font-weight:700;letter-spacing:.06em;color:#92502c;}
+#article-container .cps-outputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+#article-container .cps-output{min-width:0;padding:18px;background:var(--card);border:1px solid var(--line);border-top:3px solid #12a594;border-radius:12px;box-shadow:0 10px 30px -12px rgba(31,36,48,.12);}
+#article-container .cps-output.shipping{border-top-color:#517ab0;}
+#article-container .cps-output h4{margin:0 0 8px;font-size:1.1rem;}
+#article-container .cps-output p:last-child{margin-bottom:0;}
+#article-container .cps-flow{list-style:none;padding:0;margin:16px 0;}
+#article-container .cps-flow>li{position:relative;margin:0;padding:0 0 22px 42px;color:var(--sub);}
+#article-container .cps-flow>li:before{content:"";position:absolute;left:12px;top:10px;width:11px;height:11px;background:#8b98a7;border-radius:50%;z-index:1;}
+#article-container .cps-flow>li:not(:last-child):after{content:"↓";position:absolute;left:9px;top:29px;color:#8b98a7;font-size:20px;}
+#article-container .cps-flow>li:last-child{padding-bottom:0;}
+#article-container .cps-flow .current:before{background:#e78959;}
+#article-container .cps-flow strong{display:block;}
+#article-container .cps-flow .current strong{color:#92502c;}
+#article-container .cps-note{padding:12px 16px;border-left:4px solid #12a594;background:#edf8f5;color:#20554d;border-radius:0 10px 10px 0;margin-top:18px;font-size:.92rem;}
+#article-container .cps-table{display:inline-block;max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0;}
+#article-container .cps-table table{width:auto;max-width:100%;margin:0;border-collapse:collapse;font-size:.9rem;}
+#article-container .cps-table th,#article-container .cps-table td{padding:11px 14px;border:0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;color:var(--sub);}
+#article-container .cps-table th{background:#f3f0e8;color:var(--ink);}
+#article-container .cps-table td{background:var(--card);}
+#article-container .cps-detail{padding:14px 18px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin:18px 0;}
+#article-container .cps-detail summary{cursor:pointer;font-weight:700;color:var(--ink);}
+#article-container .cps-detail summary:focus-visible{outline:2px solid #12a594;outline-offset:4px;}
+#article-container .cps-detail li{overflow-wrap:anywhere;}
+[data-theme="dark"] #article-container .cps-table th{background:#363733;}
+@media(max-width:600px){ #article-container .cps-table table,#article-container .cps-table tbody,#article-container .cps-table tr,#article-container .cps-table td{display:block;}#article-container .cps-table thead{display:none;}#article-container .cps-table td:first-child{border-bottom:0;padding-bottom:4px;}#article-container .cps-table td:last-child{padding-top:4px;} }
+[data-theme="dark"] #article-container .cps-paper{--ink:#f2ebe0;--sub:#c6c4bc;--line:#4b4944;--card:#292c30;background:#23262a;}
+[data-theme="dark"] #article-container .cps-hero{background:linear-gradient(120deg,#44352c,#2e2c29);border-color:#655044;}
+[data-theme="dark"] #article-container .cps-eyebrow,[data-theme="dark"] #article-container .cps-flow .current strong{color:#ffc592;}
+[data-theme="dark"] #article-container .cps-paper code{color:#ffd1a8;background:#463c32;}
+[data-theme="dark"] #article-container .cps-note{background:#213e37;color:#b8eadb;}
+@media(max-width:600px){ #article-container .cps-paper{padding:14px;border-radius:12px;}#article-container .cps-hero{padding:16px;}#article-container .cps-paper h2{font-size:1.25rem;}#article-container .cps-outputs{grid-template-columns:1fr;}#article-container .cps-output{padding:15px;}}
+#article-container .cps-paper td,#article-container .cps-paper th{overflow-wrap:anywhere;}
+#article-container .cps-pay-lifecycle>li:nth-child(5):before{background:#517ab0;}
+@media(max-width:600px){ #article-container .cps-matrix table{display:table;}#article-container .cps-matrix thead{display:table-header-group;}#article-container .cps-matrix tbody{display:table-row-group;}#article-container .cps-matrix tr{display:table-row;}#article-container .cps-matrix td,#article-container .cps-matrix th{display:table-cell;padding:8px 6px;font-size:.82rem;} }
+#article-container .cps-flow .cps-branch{margin:12px 0 0;padding:10px 14px;border-left:3px solid #517ab0;background:var(--card);border-radius:0 8px 8px 0;}
+</style>
+<div class="cps-paper" data-article-revision="checkout-options-intro-20261012-v3">
+<div class="cps-hero">
+<div class="cps-eyebrow">購物車的付款與配送選單</div>
+<h2>把可用金物流，整理成結帳選項</h2>
+<p>商品能搭配哪些付款與配送方式，前面的流程已經算好。這個 Processor 接著整理出購物車與結帳頁面可呈現的兩份選單。</p>
+</div>
+<h3>承接什麼？前面算好的候選資料</h3>
+<ul>
+<li><strong>可用金物流：</strong><code>CheckoutType.PayTypeList</code> 與 <code>CheckoutType.DeliveryTypeList</code>，包含候選付款方式、配送方式與已算好的運費。</li>
+<li><strong>可用分期：</strong><code>context.MatchedInstallmentList</code>，用來展開可選的分期期數。</li>
+<li><strong>本次購物車狀態：</strong>目前配送選擇、配送地區、金額與運費券等資訊，影響篩選與推薦結果。</li>
+</ul>
+<p>執行時也會取得金物流配對設定，確認哪些付款方式能搭配哪些配送方式。</p>
+<h3>重點產出：寫回兩份顯示清單</h3>
+<p>結果寫入同一份購物車的 <code>CheckoutType</code>，供後續流程與頁面使用。</p>
+<div class="cps-outputs">
+<div class="cps-output">
+<h4>可以怎麼付款？</h4>
+<p><code>DisplayPayTypeList</code></p>
+<p>整理付款分類、分期與顯示資訊，再依本次採用的物流篩選。</p>
+</div>
+<div class="cps-output shipping">
+<h4>可以怎麼收貨？</h4>
+<p><code>DisplayShippingTypeList</code></p>
+<p>整理配送方式、地區與運費明細，保留可用選項及推薦標記。</p>
+</div>
+</div>
+<h3>在流程中負責哪一段？</h3>
+<ol class="cps-flow" aria-label="金物流選單的主要處理順序">
+<li><strong>前面：準備計算資料</strong>算好商品金物流交集、運費與可用分期。</li>
+<li class="current"><strong>這裡：整理顯示選單</strong>組裝付款與配送清單，供頁面與後續流程使用。</li>
+<li><strong>後面：處理預選</strong><code>PickupShoppingCartCheckoutTypeProcessor</code> 維護目前選中的付款與配送方式。</li>
+</ol>
+<div class="cps-note">這裡產生的選單還會經過後續門檻與折抵規則調整，才成為最終回傳結果。圖中呈現主要職責順序，省略中間的重量資訊整理。</div>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 02．API 與流程定位 -->
+
+<div class="cps-paper" data-article-revision="checkout-api-position-20261012-v2">
+<div class="cps-hero">
+<div class="cps-eyebrow">從 API 入口，走到金物流選單</div>
+<h2>建立或重算購物車時，都可能經過</h2>
+<p>不同 API 會匯入共用的購物車計算流程。本 Processor 分別在促銷前、促銷後整理金物流選單。</p>
+</div>
+<h3>哪些 API 會經過？</h3>
+<p>以下皆為 POST。通過前置檢查、沒有提前中斷時，才會繼續走到本 Processor。</p>
+<div class="cps-table">
+<table>
+<thead><tr><th>API</th><th>進入情境</th></tr></thead>
+<tbody>
+<tr><td><code>/api/carts/create</code></td><td>建立購物車。</td></tr>
+<tr><td><code>/api/carts/assist-create</code></td><td>代客建立購物車。</td></tr>
+<tr><td><code>/api/carts/calculate</code></td><td>購物車頁面重算。</td></tr>
+<tr><td><code>/api/checkouts/calculate</code></td><td>結帳頁面重算。</td></tr>
+<tr><td><code>/api/carts/sku-add</code></td><td>代客下單分支，加入商品後重建購物車。</td></tr>
+<tr><td><code>/api/checkouts/create</code></td><td>有已選贈品、指定金物流贈品活動，或宅配重量計價時，才進入重算。</td></tr>
+</tbody>
+</table>
+</div>
+<h3>促銷前與促銷後，各整理一次</h3>
+<ol class="cps-flow" aria-label="API 進入共用計算流程後的主要順序">
+<li><strong>API 匯入共用計算</strong>各自的外層流程進入 <code>LogisticCalculate</code>。</li>
+<li class="current"><strong>促銷前：建立初始選單</strong>準備交集、運費與分期後，由本 Processor 整理選單，再由後續流程處理預選與折抵。</li>
+<li><strong>計算優惠碼與促銷</strong>調整商品資格與促銷結果。</li>
+<li class="current"><strong>促銷後：更新選單</strong>重算金物流資料，本 Processor 再依最新結果整理選單，交給後續預選與折抵流程。</li>
+</ol>
+<div class="cps-note">一次請求可能執行本 Processor 兩次；跳過、中斷或外層重算會改變實際次數。<code>/api/carts/get</code> 只讀取快取，不會因讀取購物車就進入這段計算。</div>
+<details class="cps-detail">
+<summary>查看呼叫鏈路與條件</summary>
+<p>入口各自選擇外層 Pipeline，最後透過 <code>ExecuteLogisticCalculateProcessor</code> 進入 <code>LogisticCalculate</code>。</p>
+<ul>
+<li>建立購物車：<code>CartCreateAsync</code> → <code>GetCart</code>。</li>
+<li>代客建立：<code>AssistCartCreateAsync</code> → <code>GetCart</code>；代客加入商品則為 <code>AssistSkuAddAsync</code> → <code>GetCart</code>。</li>
+<li>購物車重算：<code>CalculateAsync</code> → <code>CalculateInnerAsync</code> → <code>CartCalculate</code>。</li>
+<li>結帳重算：<code>PayCalculateAsync</code> → <code>PayCalculate</code>。</li>
+<li>條件式結帳建立重算：<code>Create</code> → <code>CheckoutCreate</code> → <code>GetCartAndCalculateProcessor</code> → <code>BeforeCheckoutCreate</code>。</li>
+</ul>
+<p>促銷前由 <code>ExecuteInitailPayShippingCalculateProcessor</code> 啟動 <code>InitailPayShippingCalculate</code>；促銷後由 <code>ExecutePayShippingCalculateProcessor</code> 啟動 <code>RePayShippingCalculate</code>。兩段都註冊本 Processor，名稱保留原始拼字。</p>
+<p>初始金物流可能因已設定物流且非重量計價、特定贈品券情境或未達門檻加價購而跳過；上游金物流無交集也可能中斷流程。因此上圖呈現完整走完兩段計算的主要順序，不代表每次請求固定執行兩次。</p>
+<p>來源：<code>CartsController</code>、<code>CheckoutController</code>、<code>CartService</code>、<code>CheckOutService</code>、<code>GetCartAndCalculateProcessor</code> 與 <code>ProcessorDefinitionCenter</code>。</p>
+</details>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 03．DisplayPayTypeList -->
+
+<div class="cps-paper" data-article-revision="checkout-display-pay-20261012-v2">
+<div class="cps-hero"><div class="cps-eyebrow">付款顯示清單的完整脈絡</div><h2><code>DisplayPayTypeList</code>：從候選資料到畫面選項</h2><p>前面先算出可用付款明細，這裡再組成顯示選項。清單建立後，還會經過物流篩選、分期門檻與折抵規則，最後保存並回傳。</p></div>
+<h3 id="從哪裡開始？">從哪裡開始？</h3>
+<p><code>CheckoutType.DisplayPayTypeList</code> 的型別是 <code>List&lt;CheckoutPayTypeGroupEntity&gt;</code>。它保存的是付款顯示群組，每個群組仍帶著底層付款明細。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>進入情境</th>
+<th>清單原本的狀態</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>新建購物車，首次進入</td>
+<td><code>null</code>，不是空 List。</td>
+</tr>
+<tr>
+<td>從 Redis 載入後重算</td>
+<td>可能已有上次保存的內容。</td>
+</tr>
+<tr>
+<td>同一輪進入促銷後重算</td>
+<td>可能已有促銷前建立、篩選過的內容。</td>
+</tr>
+</tbody></table></div>
+
+<h3 id="清單的一生">清單的一生</h3>
+
+<ol class="cps-flow cps-pay-lifecycle" aria-label="付款顯示清單的建立、重算與保存流程"><li><strong>上游：準備付款原料</strong>商品付款資料 → 交集與相容性篩選 → <code>CheckoutType.PayTypeList</code>。</li>
+<li class="current"><strong>第一次賦值：組裝顯示群組（<code>CalculateCheckoutPayTypeAsync</code>）</strong>建立暫存 <code>payTypeGroupList</code>，分組、排序、展開分期後，整份寫入。</li>
+<li class="current"><strong>第二次賦值：留下本次可用群組（<code>CalculateCheckoutShippingTypeAsync</code>）</strong>依本次採用的物流與特殊訂單條件，篩選並重新賦值。</li>
+<li><strong>後續：移除不適用選項</strong>依序檢查分期門檻、購物金、禮物卡與 HamiPoint 的不相容付款規則。</li>
+<li><strong>目前是否為促銷前階段？</strong><div class="cps-branch"><b>是：回到第一次賦值 ↶</b><br>優惠碼、促銷與商品資格更新 → 重算 <code>PayTypeList</code> → 重新組裝，再套用篩選與後續規則。</div><div class="cps-branch"><b>否：繼續往下 ↓</b><br>完成最後一輪後，進入分期金額更新與保存。</div></li>
+<li><strong>完成最後一輪：更新金額並保存</strong>更新分期每期金額 → 外層保存快取／回傳。下一次重算從快取還原，再重新準備來源資料。</li></ol>
+<p>上圖呈現完整走完促銷前、促銷後計算的主線；跳過、中斷或外層重算會改變實際路徑。配送明細為空且已選海外地區時，本 Processor 會提前返回，不重建本次清單。</p>
+
+<details class="cps-detail"><summary>來源詳情：初始化與上游七個準備步驟</summary>
+<h3 id="初始化：首次建立與重算的差異">初始化：首次建立與重算的差異</h3>
+<p><code>CartEntity</code> 建構子會執行 <code>CheckoutType = new CheckoutTypeEntity()</code>，但 <code>CheckoutTypeEntity.DisplayPayTypeList</code> 只有屬性宣告，沒有指定初始值，也沒有建構子替它建立空清單。因此新建物件時，這個節點的值是 <strong><code>null</code>，不是空 List</strong>。</p>
+<p>第一次真正建立顯示清單的位置是本 Processor 的 <code>CalculateCheckoutPayTypeAsync</code>。在此之前，上游主要準備的是 <code>CheckoutType.PayTypeList</code>。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>進入本 Processor 的情境</th>
+<th>進入前的 <code>DisplayPayTypeList</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>新建購物車，第一次執行到本 Processor</td>
+<td>是 <code>null</code>，尚未產生顯示清單。</td>
+</tr>
+<tr>
+<td>既有購物車從 Redis 載入後重算</td>
+<td>可能已有上一次保存的清單。</td>
+</tr>
+<tr>
+<td>同一輪計算進入促銷後金物流流程</td>
+<td>可能已有促銷前產生、經後續規則篩選的清單。</td>
+</tr>
+</tbody></table></div>
+<p>所以「本 Processor 之前都沒有資料」只適用於<strong>新建購物車首次產生清單</strong>的情境，不能套用到所有重算情境。</p>
+<h3 id="上游來源：先形成-paytypelist">上游來源：先形成 <code>PayTypeList</code></h3>
+<p>兩份清單的層次不同：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>商品的 <code>PayTypeList</code></td>
+<td>個別商品支援的付款明細。</td>
+</tr>
+<tr>
+<td><code>CheckoutType.PayTypeList</code></td>
+<td>購物車經交集與相容性篩選後的付款明細，供後續計算使用。</td>
+</tr>
+<tr>
+<td><code>CheckoutType.DisplayPayTypeList</code></td>
+<td>從上述明細組裝成的結帳付款群組，包含顯示資料與分期選項。</td>
+</tr>
+</tbody></table></div>
+<p>主要資料來源順序如下：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>順序</th>
+<th>處理位置</th>
+<th>賦值或調整</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>CartCreateProcessor</code></td>
+<td>透過 Repository 的 <code>GetSalePagePayTypeAsync</code> 取得商品付款資料，保存至 <code>SalepageIdPayTypesDictionary</code>，並配置到商品付款清單。</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>GetPayTypeIsAvaliableProcessor</code></td>
+<td>準備購物車的 <code>EnablePayProfileTypeDef</code>，供後面排除不相容付款方式。</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>CalculatePayDeliveryMappingProcessor</code> → <code>PayShippingMappingService.CalculatePayDeliveryMapping</code></td>
+<td>視 <code>IsSkipSalepagePayDeliveryTypeInitial</code> 旗標，從 Dictionary 還原商品金物流資料，再計算交集。</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>PayShippingMappingService.CalculatePayType</code></td>
+<td>將一般商品與贈品券商品的付款方式依 <code>PayProfileTypeDef</code> 取交集並排序，再套用 <code>EnablePayProfileTypeDef</code> 與優惠碼指定金流限制。優惠碼有指定付款且存在交集時，才篩成指定付款清單。</td>
+</tr>
+<tr>
+<td>5</td>
+<td>同一方法</td>
+<td>執行 <code>CheckoutType.PayTypeList = excludeStaleAppPayTypeList</code>。</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>CalculatePayShippingMapping</code></td>
+<td>使用付款與配送 Mapping，從 <code>PayTypeList</code> 移除無法搭配目前配送方式的付款明細。</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>GetShopShippingWeightFeeProfileProcessor</code></td>
+<td>進入跨境付款配送處理時，依海外支援清單再次篩選並覆寫 <code>PayTypeList</code>。</td>
+</tr>
+</tbody></table></div>
+<p>這些步驟準備的是 <code>PayTypeList</code> 原料，尚未首次產生 <code>DisplayPayTypeList</code>。若金物流無交集，上游可能設定 <code>IsInterrupted</code> 與 <code>NeedReCalculate</code>，本輪便不一定會繼續執行到顯示清單建立步驟。</p>
+
+</details>
+<h3 id="兩次賦值，各自做什麼？">兩次賦值，各自做什麼？</h3>
+<p>這裡的「兩次」指<strong>同一次正常執行中的兩個賦值點</strong>。促銷前、促銷後各執行一次 Processor，是另一個層次。</p>
+
+<ol class="cps-flow">
+<li class="current"><strong>第一次：建立新的付款選單</strong>檢查「至少有一種物流能搭配」，再依付款分類組裝。新清單會取代舊清單。</li>
+<li class="current"><strong>第二次：依本次物流收斂</strong>檢查「能搭配本次採用的物流」，再套用特殊訂單規則。產生新的 List 容器，保留的群組物件沿用第一次的物件。</li>
+</ol>
+<p>已有已選物流時，以該物流篩選；尚未選物流時，以最低費用候選篩選，候選選擇也考慮可否預選。走到這裡不代表消費者一定已經選好物流。</p>
+
+<h4 id="假設例子：付款清單為什麼會縮小？">假設例子：付款清單為什麼會縮小？</h4>
+<p>假設來源有信用卡與 ATM，現有配送有宅配與超商取貨；其他門檻皆通過，配對設定如下：</p>
+<div class="cps-table cps-matrix"><table>
+<thead>
+<tr>
+<th>付款分類</th>
+<th>宅配</th>
+<th>超商取貨</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>信用卡</td>
+<td>可搭配</td>
+<td>可搭配</td>
+</tr>
+<tr>
+<td>ATM</td>
+<td>可搭配</td>
+<td>不可搭配</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>第一次賦值：</strong> 信用卡與 ATM 都有物流可搭配，因此兩者都加入。</li>
+<li><strong>第二次賦值：</strong> 若本次採用超商取貨，只保留信用卡；若採用宅配，兩者都保留。</li>
+</ul>
+
+<h4 id="為什麼用-statisticstypedefs？">為什麼用 <code>statisticsTypeDefs</code>？</h4>
+<p>顯示清單按 <code>StatisticsTypeDef</code> 組成付款分類，所以也用同一欄位比對本次物流允許的分類白名單。<code>PayProfileTypeDef</code> 則是分類底下的具體付款明細。這次篩選保留或移除整個群組，不會逐一重篩群組內的 <code>PayTypeList</code>。</p>
+
+<details class="cps-detail"><summary>第一次賦值詳情：呼叫順序、分組與各金流規則</summary>
+<h3 id="第一次賦值：組裝付款顯示群組">第一次賦值：組裝付款顯示群組</h3>
+<p>本 Processor 的呼叫順序是：</p>
+<p><code>ExecuteAsync</code> → <code>CalculateCheckoutShippingTypeAsync</code> → <code>CalculateCheckoutPayTypeAsync</code></p>
+<p><code>CalculateCheckoutPayTypeAsync</code> 先建立區域變數 <code>payTypeGroupList = new List&lt;CheckoutPayTypeGroupEntity&gt;()</code>。此時只是建立暫存清單，尚未改動 Entity 的 <code>DisplayPayTypeList</code>。</p>
+<p>接著以 <code>CheckoutType.PayTypeList</code> 為來源，依 <code>StatisticsTypeDef</code> 分組，透過 <code>StatisticsTypeDefComparer</code> 排序，預設依市場順序，符合條件時由全域或商店的 <code>EventSort</code> 設定覆蓋。每一組先確認存在可搭配的配送方式，沒有相容配送的付款群組不加入。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>付款類型</th>
+<th>組裝與篩選規則</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CreditCardInstallment</code>、<code>CreditCardInstallment_Razer</code></td>
+<td>從 <code>MatchedInstallmentList</code> 逐筆建立付款群組，依 <code>HasInterest</code>、<code>InstallmentDef</code> 排序；各選項直接引用對應的分期物件。</td>
+</tr>
+<tr>
+<td><code>Wallet</code></td>
+<td>補上顯示名稱與圖示。</td>
+</tr>
+<tr>
+<td><code>GiftCard</code></td>
+<td>補上顯示名稱。</td>
+</tr>
+<tr>
+<td><code>Atome</code></td>
+<td><code>SubTotalPayment</code> 須達設定的付款門檻。</td>
+</tr>
+<tr>
+<td><code>RazerPay</code></td>
+<td>選取地區的國碼須為 <code>60</code>，且商店啟用 MYR 自訂匯率。</td>
+</tr>
+<tr>
+<td><code>OPPayLater</code></td>
+<td>嘗試取得啟用分期的說明資訊；查詢失敗或超過等待時間，不因此移除該選項。</td>
+</tr>
+<tr>
+<td><code>CreditCardOnce_KPay</code></td>
+<td>依商店設定補上支援卡別。</td>
+</tr>
+<tr>
+<td><code>CreditCardOnce</code></td>
+<td>依信用卡設定補上支援卡別。</td>
+</tr>
+<tr>
+<td>其他付款類型</td>
+<td>建立一般付款群組，帶入該組的付款明細。</td>
+</tr>
+</tbody></table></div>
+<p>組裝完成後，執行第一次整份賦值：</p>
+<p><strong><code>shoppingCart.CheckoutType.DisplayPayTypeList = payTypeGroupList</code></strong></p>
+<p>這是以新清單<strong>取代</strong>舊清單，不是向舊清單追加選項。原始碼追蹤時的對應位置為 <code>CalculateShoppingCartCheckoutPayShippingProcessor.cs</code> 第 393 行；後續行號可能隨程式修改而變動，應以方法名稱與賦值敘述定位。</p>
+
+</details>
+<details class="cps-detail"><summary>第二次賦值詳情：物流選擇、特殊訂單與分類白名單</summary>
+<h3 id="第二次賦值：依物流與訂單情境篩選">第二次賦值：依物流與訂單情境篩選</h3>
+<p>回到 <code>CalculateCheckoutShippingTypeAsync</code> 後，依前面決定的物流類型建立付款白名單 <code>statisticsTypeDefs</code>。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>購物車狀態</th>
+<th>物流篩選基礎</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>已有 <code>SelectedCheckoutShippingTypeGroup</code></td>
+<td>使用已選物流的 <code>ShippingProfileTypeDef</code>。</td>
+</tr>
+<tr>
+<td>尚未選物流</td>
+<td>使用最低費用物流候選；候選選擇也會考慮是否允許預選。</td>
+</tr>
+</tbody></table></div>
+<p>接著套用訂單情境：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>情境</th>
+<th>付款白名單</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一般購物車</td>
+<td>該物流 Mapping 對應的付款類型。</td>
+</tr>
+<tr>
+<td>只有贈品券商品，且運費為 0</td>
+<td>只留 <code>FreeOfCharge</code>。</td>
+</tr>
+<tr>
+<td>只有贈品券商品，但運費大於 0</td>
+<td>排除 <code>FreeOfCharge</code>。</td>
+</tr>
+<tr>
+<td>OSM 0 元代客單</td>
+<td>只留 <code>FreeOfCharge</code>。</td>
+</tr>
+</tbody></table></div>
+<p>最後執行第二次整份賦值：</p>
+<p><strong><code>DisplayPayTypeList = DisplayPayTypeList.Where(x =&gt; statisticsTypeDefs.Contains(x.StatisticsTypeDef)).ToList()</code></strong></p>
+<p>這會建立新的 List 容器，保留的付款群組物件仍是第一次組裝時建立的物件。原始碼追蹤時的對應位置為同一檔案第 577 行。</p>
+<p>因此 <code>DisplayPayTypeList</code> 不只是所有商品支援付款方式的聯集或交集；它還受到當下物流類型與特殊訂單條件限制。</p>
+<h4 id="為什麼用-statisticstypedefs-篩選？">為什麼用 <code>statisticsTypeDefs</code> 篩選？</h4>
+<p>因為 <code>DisplayPayTypeList</code> 已經是依 <code>StatisticsTypeDef</code> 分組的付款顯示群組，第二次篩選使用相同層級的欄位比對。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>資料層級</th>
+<th>使用位置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PayProfileTypeDef</code></td>
+<td>底層的具體付款方式。</td>
+<td>商品付款交集、<code>CheckoutType.PayTypeList</code> 中的付款明細。</td>
+</tr>
+<tr>
+<td><code>StatisticsTypeDef</code></td>
+<td>結帳畫面上的付款分類。</td>
+<td><code>DisplayPayTypeList</code> 各付款群組的分類欄位；同分類仍可能因分期不同而展開成多個選項。</td>
+</tr>
+</tbody></table></div>
+<p>第一次組裝時，程式將 <code>CheckoutType.PayTypeList</code> 依 <code>StatisticsTypeDef</code> 分組，每個顯示群組再透過自己的 <code>PayTypeList</code> 保存底層付款明細。因此第二次篩選的順序是：</p>
+<ol>
+<li>使用本次採用的 <code>ShippingProfileTypeDef</code> 查詢金物流 Mapping。</li>
+<li>取出該物流對應的 <code>StatisticsTypeDef</code> 集合，存入 <code>statisticsTypeDefs</code>，再依特殊訂單條件調整。</li>
+<li>比對各顯示群組的 <code>StatisticsTypeDef</code>，只有在集合內的群組才保留。</li>
+</ol>
+<p><strong><code>statisticsTypeDefs</code> 代表「本次物流與訂單情境允許顯示的付款分類白名單」。</strong></p>
+<p>兩次賦值的物流檢查也有不同範圍：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>賦值階段</th>
+<th>物流相容性檢查</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>第一次：組裝顯示群組</td>
+<td>該付款分類是否至少有一種可搭配的配送方式；此外還會分組、排序、展開分期及套用付款個別規則。</td>
+</tr>
+<tr>
+<td>第二次：篩選顯示群組</td>
+<td>該付款分類是否能搭配本次採用的物流，並符合特殊訂單條件。</td>
+</tr>
+</tbody></table></div>
+<p>所以第一次不是單純拿到一份 <code>PayTypeList</code> 就直接指派，也不是直到第二次才考慮物流。差異在於第一次檢查「有沒有物流能搭配」，第二次檢查「能不能搭配本次採用的物流」。</p>
+<p>此處的篩選粒度停在<strong>付款群組層級</strong>。保留一個群組時，這段 <code>Where</code> 不會再逐一篩選群組內部 <code>PayTypeList</code> 的 <code>PayProfileTypeDef</code>。本方法前段的原始碼 TODO 也指出，以 <code>StatisticsTypeDef</code> 過濾可用 Mapping，若同分類下某個 <code>PayProfileTypeDef</code> 不存在，可能造成取得最低運費的異常；這是方法前段 Mapping 候選計算的既有提醒，不能把兩個欄位視為完全等價。</p>
+
+</details>
+<h3 id="離開這裡後，清單還會改變">離開這裡後，清單還會改變</h3>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>後續處理</th>
+<th>對清單的影響</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pickup</td>
+<td>移除未達付款金額門檻的一般信用卡分期。</td>
+</tr>
+<tr>
+<td>購物金 → 禮物卡 → HamiPoint</td>
+<td>各自符合檢查條件時，以 <code>RemoveAll</code> 移除不相容付款分類。</td>
+</tr>
+<tr>
+<td>促銷後重算</td>
+<td>從更新後的 <code>PayTypeList</code> 重建，前一輪被移除的選項會重新接受判斷。</td>
+</tr>
+<tr>
+<td>每期金額計算</td>
+<td>更新清單引用的分期物件，未必重新賦值整份 List。</td>
+</tr>
+<tr>
+<td>快取保存與還原</td>
+<td>保存本輪結果，下次載入時可能已有清單；單純 <code>/api/carts/get</code> 不重建。</td>
+</tr>
+</tbody></table></div>
+
+<p>禮物卡與 HamiPoint 通過可用性檢查後就會檢查不相容清單，不能把移除條件理解成「已勾選且折抵金額大於 0」。最終顯示結果取決於最後一輪計算。</p>
+
+<details class="cps-detail"><summary>後續詳情：四類移除條件、重算、每期金額與快取</summary>
+<h3 id="離開本-processor-後：四類移除規則">離開本 Processor 後：四類移除規則</h3>
+<p>本 Processor 結束時的清單還不是最終結果。後續依金物流子流程順序，以 <code>RemoveAll</code> 修改現有 List：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>順序</th>
+<th>修改位置</th>
+<th>條件與行為</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>PickupShoppingCartCheckoutTypeProcessor.ExcludeInvalidPayType</code></td>
+<td>有選取物流時，以商品小計＋所選運費－預估購物金－預估合作夥伴付款－預估禮物卡金額，移除未達 <code>InstallmentAmountLimit</code> 的 <code>CreditCardInstallment</code> 選項。這段判斷針對一般信用卡分期。</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>CalculateCheckoutStoreCreditProcessor</code></td>
+<td>清單含購物金選項，且進入自動填入／已啟用折抵、餘額大於 0 的分支時，依購物金的 <code>PayProfileTypeDefDisallowList</code> 移除不相容付款類型。</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>CalculateGiftCardSelectionProcessor</code> → <code>GiftCardSelectionHandler.CheckUnsupportedPayTypeList</code></td>
+<td>清單含 GiftCard 且有 <code>DisplayGiftCard</code> 時，依禮物卡的 <code>PayProfileTypeDefDisallowList</code> 移除不相容付款類型。</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>CalculateCheckoutPartnerPayTypeProcessor</code> → <code>CheckoutHamiPointCalculator.CheckUnsupportedPayTypeList</code></td>
+<td>合作夥伴計算派送到 HamiPoint，且 HamiPoint 選項與顯示資料可用時，依其 <code>PayProfileTypeDefDisallowList</code> 移除不相容付款類型。</td>
+</tr>
+</tbody></table></div>
+<p>上述不相容清單的欄位雖名為 <code>PayProfileTypeDefDisallowList</code>，這幾段 <code>RemoveAll</code> 實作實際比對的是付款群組的 <code>StatisticsTypeDef</code>。</p>
+<p><strong>禮物卡與 HamiPoint 的移除條件，不等於「使用者已勾選且實際折抵金額大於 0」。</strong>通過可用性檢查後就會檢查不相容清單，不能額外推定一定要有正數折抵才移除。</p>
+<p>建立結帳頁時，<code>CreateCheckoutCalculateGiftCardSelectionProcessor</code> 也會呼叫同一個 <code>GiftCardSelectionHandler</code>，因此即使該次建立結帳頁沒有進入完整金物流重算，後續禮物卡處理仍可能修改清單。</p>
+<h3 id="促銷後重建：前一輪移除不代表永久消失">促銷後重建：前一輪移除不代表永久消失</h3>
+<p>初始金物流完成後，外層進行優惠碼、促銷與商品資格調整，再進入 <code>RePayShippingCalculate</code>。本 Processor 會從更新後的 <code>PayTypeList</code> 重新組裝 <code>payTypeGroupList</code>，重做兩次賦值及後續移除規則。</p>
+<p>因此促銷前被移除的選項，若在促銷後仍存在於來源 <code>PayTypeList</code>，會重新接受組裝與篩選判斷；它不是永遠保留在某個已刪除狀態。最終是否顯示，取決於最後一輪的來源資料與規則。</p>
+<h3 id="清單內容更新：分期每期金額">清單內容更新：分期每期金額</h3>
+<p>外層 <code>LogisticCalculate</code> 後續的 <code>CalculateShoppingCartEachInstallmentPriceProcessor</code> 不重新賦值整個清單，而是更新清單引用的分期物件。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>分支</th>
+<th>更新內容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一般信用卡分期</td>
+<td>從 <code>DisplayPayTypeList</code> 取出 <code>CreditCardInstallment</code> 的 <code>InstallmentType</code>，更新 <code>EachInstallmentPrice</code>；金額計算包含購物金、禮物卡與合作夥伴付款資料。</td>
+</tr>
+<tr>
+<td>已選 Razer 信用卡分期</td>
+<td>更新 <code>MatchedInstallmentList</code> 的 <code>EachInstallmentPriceDecimal</code>；付款群組建立時直接引用這些分期物件，因此結果也反映到顯示選項。此分支的計算使用總金額扣除購物金與禮物卡。</td>
+</tr>
+</tbody></table></div>
+<p>追蹤賦值時不能只搜尋 <code>DisplayPayTypeList =</code>；即使 List 沒有被替換，內部引用物件的欄位仍可能被後續更新。</p>
+<h3 id="快取保存、還原與其他同名欄位">快取保存、還原與其他同名欄位</h3>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>情境</th>
+<th>處理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>購物車計算完成</td>
+<td><code>CacheCartDataProcessor</code> 保存購物車資料，包含 <code>CheckoutType</code> 下的顯示清單。</td>
+</tr>
+<tr>
+<td>結帳重算完成</td>
+<td><code>CachePayDataProcessor</code> 保存計算結果。</td>
+</tr>
+<tr>
+<td>下次購物車重算</td>
+<td><code>LoadCacheCartDataProcessor</code> 從 Redis 還原 <code>CartEntity</code>，清單可能已有前次內容。</td>
+</tr>
+<tr>
+<td>下次結帳重算</td>
+<td><code>LoadCachedCheckoutDataProcessor</code> 從 Redis 還原 <code>CheckoutEntity</code>。</td>
+</tr>
+<tr>
+<td>單純 <code>/api/carts/get</code></td>
+<td>讀取已保存結果，不重新組裝付款清單。</td>
+</tr>
+</tbody></table></div>
+<p><code>CartEntityHashTransformer</code> 與 <code>CheckoutEntityHashTransformer</code> 會還原整個 <code>CheckoutType</code>，所以雖然不是直接寫 <code>DisplayPayTypeList = ...</code>，仍是這個節點重新取得資料的入口。</p>
+<p><code>OldCartMapperService</code> 與資料驗證程式也有同名欄位的轉換賦值，但那是在建立另一份模型，不是重新決定新版購物車的付款選項。</p>
+<p>就目前新版購物車主鏈路而言，核心修改可分成：<strong>本 Processor 內的兩個直接賦值點、後續四類移除規則、分期引用物件更新，以及快取還原</strong>。</p>
+
+</details>
+<details class="cps-detail"><summary>原始碼對照：初始化、賦值、移除與還原位置</summary>
+<h3 id="原始碼依據">原始碼依據</h3>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>查閱目的</th>
+<th>檔案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CartEntity 建構子</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.BE/Processor/Cart/CartEntity.cs</code></td>
+</tr>
+<tr>
+<td>欄位宣告與預設值</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.BE/CheckOut/CheckoutTypeEntity.cs</code></td>
+</tr>
+<tr>
+<td>商品付款資料來源</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/Create/CartCreateProcessor.cs</code></td>
+</tr>
+<tr>
+<td>可用付款類型</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/Create/GetPayTypeIsAvaliableProcessor.cs</code></td>
+</tr>
+<tr>
+<td>付款交集與 Mapping</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/PayShippingMapping/PayShippingMappingService.cs</code></td>
+</tr>
+<tr>
+<td>跨境付款篩選</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/Create/GetShopShippingWeightFeeProfileProcessor.cs</code></td>
+</tr>
+<tr>
+<td>兩次整份賦值</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/Create/CalculateShoppingCartCheckoutPayShippingProcessor.cs</code></td>
+</tr>
+<tr>
+<td>分期門檻移除</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/Create/PickupShoppingCartCheckoutTypeProcessor.cs</code></td>
+</tr>
+<tr>
+<td>購物金不相容付款移除</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Calculate/CalculateCheckoutStoreCreditProcessor.cs</code></td>
+</tr>
+<tr>
+<td>禮物卡不相容付款移除</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/GiftCard/GiftCardSelectionHandler.cs</code></td>
+</tr>
+<tr>
+<td>建立結帳頁的禮物卡計算</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Checkout/Create/CreateCheckoutCalculateGiftCardSelectionProcessor.cs</code></td>
+</tr>
+<tr>
+<td>HamiPoint 不相容付款移除</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Calculate/CheckoutHamiPointCalculator.cs</code></td>
+</tr>
+<tr>
+<td>分期金額更新</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/Create/CalculateShoppingCartEachInstallmentPriceProcessor.cs</code></td>
+</tr>
+<tr>
+<td>購物車快取還原</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Cache/Hash/CartEntityHashTransformer.cs</code></td>
+</tr>
+<tr>
+<td>結帳快取還原</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Cache/Hash/CheckoutEntityHashTransformer.cs</code></td>
+</tr>
+</tbody></table></div>
+
+</details>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 04．CalculateCheckoutPayTypeAsync -->
+
+<div class="cps-paper" data-article-revision="checkout-pay-method-20261012-v1">
+<section class="cps-method-part">
+<div class="cps-hero"><div class="cps-eyebrow">放大第一次賦值的內部工作</div><h2><code>CalculateCheckoutPayTypeAsync</code></h2><p>把底層付款明細整理成畫面選項：同類付款先分組，分期展開成多筆，再補上名稱、說明與支援卡別。</p></div>
+<h3 id="核心工作：組裝新的付款選單">核心工作：組裝新的付款選單</h3>
+
+<ol class="cps-flow" aria-label="付款明細轉成顯示選項的順序"><li><strong>取得來源</strong><p>讀取 <code>CheckoutType.PayTypeList</code>、上游可用分期與已取得的金物流 Mapping，建立暫存清單。</p>
+</li>
+<li><strong>分組與排序</strong><p>以 <code>StatisticsTypeDef</code> 分組，再依付款分類的排序設定決定前後順序。</p>
+</li>
+<li><strong>逐組檢查與組裝</strong><p>至少有一種相容配送才處理；沒有就跳過該分類。有相容配送時，再進入下方各金流分支。</p>
+</li>
+<li><strong>整份寫回</strong><p>完成所有分類後，執行 <code>DisplayPayTypeList = payTypeGroupList</code>，取代舊清單。</p>
+</li></ol>
+<p>這裡是第一次賦值。返回 <code>CalculateCheckoutShippingTypeAsync</code> 後，才會再依本次採用的物流與特殊訂單條件篩選。</p>
+
+<details class="cps-detail"><summary>輸入與分組詳情：呼叫路徑、輸出欄位與物流檢查</summary>
+<h3 id="核心工作">核心工作</h3>
+<p>本方法將 <code>CheckoutType.PayTypeList</code> 的底層付款明細，轉換成 <code>DisplayPayTypeList</code> 的結帳付款選項。它負責<strong>判斷付款選項是否出現、分組與排序、展開分期選項，以及補齊顯示與卡別資料</strong>。</p>
+<p>呼叫路徑為 <code>ExecuteAsync</code> → <code>CalculateCheckoutShippingTypeAsync</code> → <code>CalculateCheckoutPayTypeAsync</code>。輸入包含購物車 <code>shoppingCart</code> 與上游準備好的可用分期 <code>matchedInstallmentList</code>，並使用本 Processor 已取得的 <code>_payShippingMappingList</code>。</p>
+<p>方法先建立區域清單 <code>payTypeGroupList</code>，逐組處理後才執行 <code>shoppingCart.CheckoutType.DisplayPayTypeList = payTypeGroupList</code>，整份取代舊清單。這是第二節所述的第一次賦值；返回外層後，還會依本次採用的物流與特殊訂單條件進行第二次篩選賦值。</p>
+<h3 id="分組依據與共通物流檢查">分組依據與共通物流檢查</h3>
+<p>來源為 <code>shoppingCart.CheckoutType.PayTypeList</code>，使用 <code>GroupBy(i =&gt; i.StatisticsTypeDef)</code> 分組。因此顯示選項的分類依據是 <code>StatisticsTypeDef</code>，底層的具體付款方式仍保存在群組內的 <code>PayTypeList</code>。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>輸出群組欄位</th>
+<th>意義</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>StatisticsTypeDef</code></td>
+<td>此選項的付款分類。</td>
+</tr>
+<tr>
+<td><code>PayTypeList</code></td>
+<td>該分類包含的具體付款明細。</td>
+</tr>
+<tr>
+<td><code>InstallmentType</code></td>
+<td>分期選項對應的分期資訊。</td>
+</tr>
+<tr>
+<td><code>DisplayName</code>、<code>DisplayIconUrl</code>、<code>AdditionalInfo</code></td>
+<td>依付款類型需要補上的顯示資訊。</td>
+</tr>
+</tbody></table></div>
+<p>一般付款分類通常產生一個顯示選項；信用卡分期類型則會展開成多個選項，因此 <code>StatisticsTypeDef</code> 不是顯示清單中每一筆資料的唯一識別。</p>
+<p>在進入各金流分支前，所有分類都先通過物流檢查：從 Mapping 取出該 <code>StatisticsTypeDef</code> 支援的 <code>ShippingProfileTypeDef</code>，確認目前 <code>DeliveryTypeList</code> 至少有一種相容配送。若完全沒有，直接 <code>continue</code>，不加入付款顯示清單。這裡檢查的是「是否存在可搭配物流」，外層才會進一步檢查「是否符合本次採用物流」。</p>
+
+</details>
+</section>
+<section class="cps-method-part">
+<h3 id="分組與排序是兩件事">分組與排序是兩件事</h3>
+<p><strong>分組依據是付款分類 <code>StatisticsTypeDef</code>。</strong> 同分類的底層付款明細放在群組的 <code>PayTypeList</code>；分期則能在同一分類下產生多個選項，因此分類不是每筆選項的唯一識別。</p>
+<p><strong>排序由 <code>StatisticsTypeDefComparer</code> 決定。</strong> 先有市場預設順序，後面的設定符合條件才覆蓋：</p>
+
+<ol class="cps-flow" aria-label="付款分類排序設定的覆蓋順序"><li><strong>市場預設</strong><p>依 <code>SystemDefault:Country</code> 使用 TW 或其他市場的內建順序。</p>
+</li>
+<li><strong>全域活動</strong><p>現在位於全域活動期間內，改用全域活動排序；否則沿用市場預設。</p>
+</li>
+<li><strong>商店活動</strong><p>商店在 <code>CustomSortShopIds</code>，有商店設定且活動期間有效時，改用商店排序；否則沿用前一步。</p>
+</li></ol>
+<p>活動時間含開始、不含結束。列在最終排序清單的分類優先；兩者都沒列入時，以字串 <code>CompareTo</code> 比較。後續沒有有效已選付款時，Pickup 會取篩選後的第一筆，因此排序也可能影響預選。</p>
+
+<details class="cps-detail"><summary>排序設定詳情：設定 Key、覆蓋條件與比較方式</summary>
+<h3 id="排序依據">排序依據</h3>
+<p>方法取得全域與商店的 <code>EventSort</code> 設定，建立 <code>StatisticsTypeDefComparer</code>，再以 <code>OrderBy(i =&gt; i.Key, statisticsTypeDefComparer)</code> 排序付款群組。</p>
+<p>Comparer 的排序來源依下列順序決定，後面符合條件的設定會覆蓋前面的排序：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>順序</th>
+<th>排序來源</th>
+<th>套用條件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>程式內建市場排序</td>
+<td>依 <code>SystemDefault:Country</code> 選擇 TW 或其他市場的預設清單。</td>
+</tr>
+<tr>
+<td>2</td>
+<td>全域活動排序</td>
+<td>現在時間在全域 <code>StatisticsType.EventStartDateTime</code> 與 <code>StatisticsType.EventEndDateTime</code> 之間時，改用全域 <code>StatisticsType.EventSort</code>。</td>
+</tr>
+<tr>
+<td>3</td>
+<td>商店活動排序</td>
+<td>商店位於全域 <code>CustomSortShopIds</code>，且商店設定存在、目前位於商店活動時間內時，改用商店的 <code>StatisticsType.EventSort</code>。</td>
+</tr>
+</tbody></table></div>
+<p>活動時間判斷包含開始時間、不包含結束時間。付款分類依最終排序清單的位置比較；有列入清單的分類優先，若兩個分類都未列入，則使用字串 <code>CompareTo</code> 比較。</p>
+<p>這個順序也會間接影響預選：後續 <code>PickupShoppingCartCheckoutTypeProcessor</code> 在沒有有效已選付款方式時，取 <code>DisplayPayTypeList</code> 第一筆。實際預選結果仍取決於中間有哪些選項被篩除。</p>
+
+</details>
+</section>
+<section class="cps-method-part">
+<h3 id="不同金流，各自處理什麼？">不同金流，各自處理什麼？</h3>
+<p>所有分支都先通過「至少有一種相容配送」的檢查。以下以處理目的分組：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>類型</th>
+<th>本方法的處理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CreditCardInstallment</code>、<code>CreditCardInstallment_Razer</code></td>
+<td>每筆可用分期產生一個選項；分期清單為空就沒有選項。</td>
+</tr>
+<tr>
+<td><code>Atome</code></td>
+<td><code>SubTotalPayment</code> 達設定門檻才加入，等於門檻也保留。</td>
+</tr>
+<tr>
+<td><code>RazerPay</code></td>
+<td>配送國碼為 <code>60</code>，且商店啟用 MYR 自訂匯率，才加入。</td>
+</tr>
+<tr>
+<td><code>Wallet</code></td>
+<td>補顯示名稱與圖示。</td>
+</tr>
+<tr>
+<td><code>GiftCard</code></td>
+<td>補商店顯示名稱。</td>
+</tr>
+<tr>
+<td><code>OPPayLater</code></td>
+<td>嘗試取得啟用分期說明，寫入 <code>AdditionalInfo</code>；失敗或逾時仍保留選項。</td>
+</tr>
+<tr>
+<td><code>CreditCardOnce</code>、<code>CreditCardOnce_KPay</code></td>
+<td>依各自設定補上支援卡別，設定缺少不因此移除選項。</td>
+</tr>
+<tr>
+<td>其他付款類型</td>
+<td>建立一般群組，帶入分類與付款明細。</td>
+</tr>
+</tbody></table></div>
+
+<p><code>OPPayLater</code> 最多等待這次查詢約 1 秒，逾時只停止等待，沒有取消 API 請求。<code>RazerPay</code> 的條件只限這個類型，不能套用到所有名稱帶 <code>_Razer</code> 的付款方式。</p>
+
+<details class="cps-detail"><summary>各金流完整規則：門檻設定、查詢行為與顯示名稱</summary>
+<h3 id="不同金流處理表格">不同金流處理表格</h3>
+<p>下列分支都以前述共通物流檢查通過為前提。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>付款類型</th>
+<th>特別處理</th>
+<th>是否在此分支決定不顯示</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CreditCardInstallment</code></td>
+<td>從 <code>matchedInstallmentList</code> 逐筆展開分期選項。</td>
+<td>是；清單為空就不產生分期選項。</td>
+</tr>
+<tr>
+<td><code>CreditCardInstallment_Razer</code></td>
+<td>同樣從可用分期清單展開，並記錄分期資料數量。</td>
+<td>是；清單為空就不產生分期選項。</td>
+</tr>
+<tr>
+<td><code>Wallet</code></td>
+<td>從 Wallet Service 取得商店顯示名稱與圖示。</td>
+<td>此分支主要補顯示資料。</td>
+</tr>
+<tr>
+<td><code>Atome</code></td>
+<td>讀取 <code>_N1CONFIG:PaymentLimitList:Atome</code>，檢查 <code>SubTotalPayment</code>。</td>
+<td>是；小於門檻時排除，等於門檻會保留。實際門檻取設定值，不應以註解中的 10 元視為固定規則。</td>
+</tr>
+<tr>
+<td><code>RazerPay</code></td>
+<td>要求 <code>SelectedShippingArea.CountryCode == &quot;60&quot;</code>，且商店啟用 MYR 自訂匯率。</td>
+<td>是；兩條件必須同時成立。只針對此類型，不泛指所有 <code>_Razer</code> 金流。</td>
+</tr>
+<tr>
+<td><code>GiftCard</code></td>
+<td>從 GiftCard Display Service 取得商店顯示名稱。</td>
+<td>此分支主要補顯示資料。</td>
+</tr>
+<tr>
+<td><code>OPPayLater</code></td>
+<td>查詢 Nine1Payments 的商店付款資訊，將啟用分期依期數排序後組成 <code>AdditionalInfo</code>。</td>
+<td>查詢失敗、逾時或例外不因此移除付款選項。</td>
+</tr>
+<tr>
+<td><code>CreditCardOnce_KPay</code></td>
+<td>讀取商店支援卡別設定，轉換後寫入付款明細的 <code>SupportedCardBrandList</code>。</td>
+<td>此分支補卡別資料，沒有因設定缺少而排除選項。</td>
+</tr>
+<tr>
+<td><code>CreditCardOnce</code></td>
+<td>呼叫 <code>ApplyTwCreditCardSupportedBrandListAsync</code>，依 AMEX 設定補支援卡別。</td>
+<td>此分支補卡別資料，沒有因設定缺少而排除選項。</td>
+</tr>
+<tr>
+<td>其他付款類型</td>
+<td>建立一般付款群組，帶入 <code>StatisticsTypeDef</code> 與 <code>PayTypeList</code>。</td>
+<td>通過共通物流檢查後加入。</td>
+</tr>
+</tbody></table></div>
+<p><code>OPPayLater</code> 的 API 查詢以 <code>Task.WhenAny</code> 與 1 秒計時競速。API 在等待期限內成功時補充說明，否則仍加入原本的群組；此處僅停止等待，沒有取消原 API 請求。</p>
+<p>一般分支沒有直接設定 <code>DisplayName</code>，不代表選項沒有名稱；<code>CheckoutPayTypeGroupEntity.DisplayName</code> 的 getter 會依付款分類提供對應名稱，分期名稱也會使用期數與是否有息資訊。</p>
+
+</details>
+</section>
+<section class="cps-method-part">
+<h3 id="分期展開：一個分類，變成多個選項">分期展開：一個分類，變成多個選項</h3>
+<p>兩種信用卡分期都直接使用 <code>matchedInstallmentList</code>，先按 <code>HasInterest</code> 排序，無息在前；同一利息類別內，再按 <code>InstallmentDef</code> 由小到大。</p>
+<p>假設來源有「有息 12 期、無息 6 期、無息 3 期」，整理後如下：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>顯示順序</th>
+<th>付款分類</th>
+<th>分期資訊</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>CreditCardInstallment</code></td>
+<td>無息 3 期</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>CreditCardInstallment</code></td>
+<td>無息 6 期</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>CreditCardInstallment</code></td>
+<td>有息 12 期</td>
+</tr>
+</tbody></table></div>
+<p>每個選項是新群組，但 <code>InstallmentType</code> 直接引用原分期物件。這裡不重新計算分期資格，也不算每期金額；後續仍會檢查一般信用卡分期門檻與更新每期金額。</p>
+
+<details class="cps-detail"><summary>分期展開詳情：五個步驟、共用清單與物件引用</summary>
+<h3 id="分期展開選項的邏輯">分期展開選項的邏輯</h3>
+<p><code>CreditCardInstallment</code> 與 <code>CreditCardInstallment_Razer</code> 使用相同的展開方式：</p>
+<ol>
+<li>直接使用上游傳入的 <code>matchedInstallmentList</code>。</li>
+<li>先以 <code>HasInterest</code> 排序，無息在前、有息在後。</li>
+<li>同一利息類別內，再依 <code>InstallmentDef</code> 由小到大排序。</li>
+<li>每一筆分期建立一個新的 <code>CheckoutPayTypeGroupEntity</code>。</li>
+<li>每個群組保留相同付款分類與該分類付款明細，但引用不同的 <code>InstallmentType</code>。</li>
+</ol>
+<p>例如上游提供以下分期，會得到三個付款選項：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>展開順序</th>
+<th><code>StatisticsTypeDef</code></th>
+<th><code>InstallmentType</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>CreditCardInstallment</code></td>
+<td>無息 3 期。</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>CreditCardInstallment</code></td>
+<td>無息 6 期。</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>CreditCardInstallment</code></td>
+<td>有息 12 期。</td>
+</tr>
+</tbody></table></div>
+<p>本方法負責展開既有結果，不重新計算分期資格，也不計算每期應付金額。後續 <code>PickupShoppingCartCheckoutTypeProcessor</code> 還會檢查一般信用卡分期門檻，<code>CalculateShoppingCartEachInstallmentPriceProcessor</code> 再更新每期金額。</p>
+<p>目前兩種分期分支都直接遍歷傳入清單，本方法沒有再依付款供應商拆分該清單。<code>InstallmentType = installment</code> 也是直接引用原分期物件，不是深層複製；後續修改同一物件，會反映到顯示選項。</p>
+
+</details>
+</section>
+<section class="cps-method-part">
+<h3 id="信用卡支援卡別，也會在這裡補上嗎？">信用卡支援卡別，也會在這裡補上嗎？</h3>
+<p><strong>會，明確補寫的是一次付清的兩個分支。</strong> 卡別寫在群組內付款明細的 <code>SupportedCardBrandList</code>，前端如何畫成圖示或文字則由前端決定。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>分支</th>
+<th>支援卡別處理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CreditCardOnce</code></td>
+<td><code>CanUseAECard</code> 為 true 時寫入 Visa、MasterCard、JCB、AMEX；false 或沒有設定則保留原值。</td>
+</tr>
+<tr>
+<td><code>CreditCardOnce_KPay</code></td>
+<td>將商店設定文字轉成卡別名稱清單；沒有設定則保留原值。</td>
+</tr>
+<tr>
+<td>信用卡分期及其他信用卡類型</td>
+<td>本方法沒有額外套用上述邏輯，以來源明細的資料為準。</td>
+</tr>
+</tbody></table></div>
+
+<p>卡別是直接修改來源付款物件；<code>ToList()</code> 只建立 List 容器，因此更新也會反映到 <code>CheckoutType.PayTypeList</code>。</p>
+
+<details class="cps-detail"><summary>卡別完整規則：設定來源、KPay 六種轉換與輔助方法限制</summary>
+<h3 id="信用卡是否在這裡提供支援卡別？">信用卡是否在這裡提供支援卡別？</h3>
+<p><strong>會，但本方法明確補寫卡別的分支是 <code>CreditCardOnce</code> 與 <code>CreditCardOnce_KPay</code>，不是所有信用卡類型一律在此設定。</strong>這裡提供的是 Visa、MasterCard 等支援卡片品牌資料；前端如何呈現圖示或文字，不在此方法範圍內。</p>
+<p>卡別寫入位置為群組底下付款明細的 <code>SupportedCardBrandList</code>，也就是 <code>DisplayPayTypeList</code> 各群組的 <code>PayTypeList</code> 項目。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>類型</th>
+<th>設定來源</th>
+<th>寫入行為</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CreditCardOnce</code></td>
+<td>ShopDefault：Group=<code>CreditCard</code>、Key=<code>CreditCardSetting</code>，解析 <code>CanUseAECard</code>。</td>
+<td>為 true 時寫入 <code>Visa</code>、<code>MasterCard</code>、<code>JCB</code>、<code>AMEX</code>；設定不存在或為 false 時保留原值，不主動清空卡別。</td>
+</tr>
+<tr>
+<td><code>CreditCardOnce_KPay</code></td>
+<td>ShopStaticSetting：Group=<code>PayProfileSupportedCardBrand</code>、Key=<code>CreditCardOnce_KPay</code>。</td>
+<td>設定存在且非空白時，將逗號分隔內容轉換為 <code>CreditCardBrandEnum</code> 名稱清單，寫入每筆付款明細；沒有設定則保留原值。</td>
+</tr>
+<tr>
+<td><code>CreditCardInstallment</code>、<code>CreditCardInstallment_Razer</code> 與其他信用卡類型</td>
+<td>本方法沒有額外呼叫上述卡別設定邏輯。</td>
+<td>以來源付款明細已有的資料為準，不能據此方法推定一定有完整卡別清單。</td>
+</tr>
+</tbody></table></div>
+<p>KPay 的設定字串轉換如下：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>設定文字</th>
+<th>寫入的卡別名稱</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Visa</code></td>
+<td><code>Visa</code></td>
+</tr>
+<tr>
+<td><code>Mastercard</code></td>
+<td><code>MasterCard</code></td>
+</tr>
+<tr>
+<td><code>American Express (AE)</code></td>
+<td><code>AMEX</code></td>
+</tr>
+<tr>
+<td><code>UnionPay</code></td>
+<td><code>UnionPay</code></td>
+</tr>
+<tr>
+<td><code>JCB</code></td>
+<td><code>JCB</code></td>
+</tr>
+<tr>
+<td><code>Diners Club</code></td>
+<td><code>DinersClub</code></td>
+</tr>
+</tbody></table></div>
+<p>轉換前會去除每段文字前後空白，但 switch 比對使用上述文字；不匹配的值不加入結果。</p>
+<p><code>ApplyTwCreditCardSupportedBrandListAsync</code> 雖然名稱帶有 Tw，目前方法本體沒有額外檢查市場國碼，而是依商店信用卡設定決定是否寫入。其註解提到一次付清／分期共用，但目前 <code>CalculateCheckoutPayTypeAsync</code> 實際只在 <code>CreditCardOnce</code> 分支呼叫，分析應以呼叫位置為準。</p>
+<p>卡別設定也會影響來源明細：程式直接修改 <code>payTypeGroup</code> 裡的物件，<code>payTypeGroup.ToList()</code> 只建立新 List 容器，不複製每筆付款物件。因此更新 <code>SupportedCardBrandList</code> 也會反映到來源 <code>CheckoutType.PayTypeList</code>。</p>
+
+</details>
+<details class="cps-detail"><summary>原始碼對照：本方法、排序器與付款群組</summary>
+<h3 id="原始碼依據">原始碼依據</h3>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>查閱目的</th>
+<th>檔案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>本方法與卡別輔助方法</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/Create/CalculateShoppingCartCheckoutPayShippingProcessor.cs</code></td>
+</tr>
+<tr>
+<td>排序來源與優先順序</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.Services/Processor/Cart/StatisticsTypeDefComparer.cs</code></td>
+</tr>
+<tr>
+<td>付款群組與顯示名稱</td>
+<td><code>src/BusinessLogic/Nine1.Cart.BL.BE/CheckOut/CheckoutPayTypeGroupEntity.cs</code></td>
+</tr>
+</tbody></table></div>
+
+</details>
+</section>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 05．cheapestFeeShippingProfile -->
+
+<div class="cps-paper" data-article-revision="checkout-cheapest-20261012-v1">
+<section class="cps-cheapest-part">
+<div class="cps-hero"><div class="cps-eyebrow">還沒選物流時，付款選單先以誰為準？</div><h2><code>cheapestFeeShippingProfile</code></h2><p>它是系統算出的最低費用物流候選。購物車尚未選好物流時，先用這個候選決定可以顯示哪些付款方式。</p></div>
+<h3 id="怎麼挑出來？">怎麼挑出來？</h3>
+
+<ol class="cps-flow" aria-label="最低費用物流候選的計算順序"><li><p><strong>先標出各溫層最便宜的明細（<code>CalculateDeliveryTypeIsCheapestFee</code>）</strong></p>
+<p>同一配送方式、地區內，各溫層挑一筆最低費用明細，標記 <code>IsCheapestFee</code>。不符合配送地區的宅配重量計價明細不參與這次挑選。</p>
+</li>
+<li><p><strong>留下可搭配付款的物流（<code>CalculateCheckoutShippingTypeAsync</code>）</strong></p>
+<p>用目前 <code>PayTypeList</code> 的付款分類查 Mapping，留下相容物流，再按配送方式、地區與 <code>Sort</code> 分組。</p>
+</li>
+<li><p><strong>加總後比較費用</strong></p>
+<p>每組加總已標記的各溫層費用，費用低的優先；同價時再看 <code>Sort</code>。例如常溫 60 元＋冷藏 120 元，合計為 180 元。</p>
+</li>
+<li><p><strong>依可否預選調整候選</strong></p>
+<p>原本最便宜的若不可預選，但有其他可預選物流，就改用「可預選中最便宜的」。全部都不可預選時，保留原候選。</p>
+</li></ol>
+<p>因此這個變數最後保存的候選，不一定是所有物流中費用最低的那一個；可否預選也會影響結果。不可預選不等於不能使用。</p>
+
+</section>
+<section class="cps-cheapest-part">
+<h3 id="哪些因素會改變「最便宜」？">哪些因素會改變「最便宜」？</h3>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>因子</th>
+<th>對結果的影響</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>可用付款與物流</td>
+<td>無法搭配目前付款方式的物流，不加入候選比較。</td>
+</tr>
+<tr>
+<td>配送地區與商品溫層</td>
+<td>不同地區可能有不同費用；多溫層要加總各溫層最低費用。</td>
+</tr>
+<tr>
+<td>前面已算好的運費</td>
+<td>商品、重量或促銷改變運費，都可能改變最低費用候選。</td>
+</tr>
+<tr>
+<td>已選運費券</td>
+<td>沒選券比較 <code>TotalFee</code>；選券後以群組的 <code>EstimateTotalFee</code> 比較。</td>
+</tr>
+<tr>
+<td>預選資格與 <code>Sort</code></td>
+<td>不可預選時可能換候選；費用相同時以 <code>Sort</code> 由小到大決定先後。</td>
+</tr>
+</tbody></table></div>
+
+<h3 id="例子：運費券讓宅配變成最便宜">例子：運費券讓宅配變成最便宜</h3>
+<p>假設宅配與超商取貨都可用、都允許預選，且上游已算好運費券的預估結果：</p>
+
+<div class="cps-table cps-matrix"><table>
+<thead>
+<tr>
+<th>物流</th>
+<th>沒選運費券</th>
+<th>選宅配運費券</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>宅配</td>
+<td>100 元</td>
+<td>0 元</td>
+</tr>
+<tr>
+<td>超商取貨</td>
+<td>60 元</td>
+<td>60 元</td>
+</tr>
+</tbody></table></div>
+
+<ul>
+<li><strong>沒選券：</strong> 超商取貨 60 元最低，候選是超商取貨。</li>
+<li><strong>選了宅配運費券：</strong> 宅配預估為 0 元，候選改成宅配。</li>
+</ul>
+<p>這裡使用上游的運費結果比較，不在這個步驟重新計算運費券優惠。</p>
+
+</section>
+<section class="cps-cheapest-part">
+<h3 id="怎麼影響付款方式？">怎麼影響付款方式？</h3>
+<p>先讀取 <code>shoppingCart.SelectedCheckoutShippingTypeGroup</code>。它是購物車目前的已選物流，可能來自消費者，也可能是前一輪系統預選。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>目前狀態</th>
+<th><code>selectedShippingTypeDef</code> 採用誰？</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>已選宅配，即使超商更便宜</td>
+<td>使用已選宅配的物流類型。</td>
+</tr>
+<tr>
+<td>尚未選物流，超商候選最便宜</td>
+<td>使用 <code>cheapestFeeShippingProfile</code> 的物流類型。</td>
+</tr>
+</tbody></table></div>
+<p>採用的物流類型 → 查金物流 Mapping → 取得 <code>statisticsTypeDefs</code> → 第二次篩選 <code>DisplayPayTypeList</code>。特殊訂單條件仍會進一步調整這份白名單。</p>
+
+<p><strong>這個步驟先決定付款清單以哪種物流為準。</strong> 它也參與推薦標記的判斷，後面的 <code>PickupShoppingCartCheckoutTypeProcessor</code> 再維護實際的已選物流群組。最低費用候選不等於消費者已選的結果，也不代表配送顯示清單只剩這一種物流。</p>
+
+</section>
+<section class="cps-cheapest-part">
+<details class="cps-detail"><summary>費用比較細節：兩層排序與預估費用缺值</summary><p>計算分成「挑各溫層明細」與「比較物流群組」兩層，使用的欄位與缺值處理不同：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>層次</th>
+<th>沒選運費券</th>
+<th>已選運費券</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>各溫層最低費用明細</td>
+<td>按 <code>TotalFee</code> 排序。</td>
+<td>按 <code>EstimateTotalFee ?? TotalFee</code> 排序，再以 <code>Fee</code> 排序。</td>
+</tr>
+<tr>
+<td>物流群組比較</td>
+<td>加總 <code>IsCheapestFee</code> 明細的 <code>TotalFee</code>。</td>
+<td>加總 <code>IsCheapestFee</code> 明細的 <code>EstimateTotalFee ?? 0</code>。</td>
+</tr>
+</tbody></table></div>
+<p>物流群組加總後再以 <code>Sort</code> 排序。預估費用缺值時，明細層退回實際費用，群組層卻以 0 加總；追查結果時，兩層不能當成相同規則。</p>
+<p>明細先依 <code>ShippingProfileTypeDef</code> 與 <code>ShippingAreaId</code> 分組，再挑各 <code>TemperatureTypeDef</code> 的最低費用。群組加總時的 Key 則包含 <code>ShippingProfileTypeDef</code>、<code>ShippingAreaId</code> 與 <code>Sort</code>。</p>
+</details>
+<details class="cps-detail"><summary>候選、推薦與提前返回的邊界</summary><ul>
+<li><code>canDefaultSelectedCheapest</code> 記錄原本最便宜的物流是否可預選；候選換成其他可預選物流後，這個值不會重算。因此替代候選不會只因被換入就得到 <code>IsRecommend</code>。</li>
+<li><code>IsRecommend</code> 還會比對候選的配送類型與地區，不是只比對費用。</li>
+<li>本方法使用付款分類 <code>StatisticsTypeDef</code> 找 Mapping 候選。原始碼 TODO 提醒，同分類下若缺少某個底層 <code>PayProfileTypeDef</code>，可能造成最低運費取得異常，不能把分類與具體付款明細當成等價。</li>
+<li>配送明細為空且目前選取海外地區時，<code>CalculateCheckoutShippingTypeAsync</code> 提前返回，不走本次候選與顯示清單重建。</li>
+</ul>
+</details>
+<details class="cps-detail"><summary>原始碼對照</summary><p>來源為 <code>CalculateShoppingCartCheckoutPayShippingProcessor.cs</code>：</p>
+<ul>
+<li><code>ExecuteAsync</code>：先計算各溫層最低費用標記，再進入配送群組計算。</li>
+<li><code>CalculateDeliveryTypeIsCheapestFee</code>：過濾地區不符的宅配重量計價明細、清除舊標記、選各溫層最低費用。</li>
+<li><code>CalculateCheckoutShippingTypeAsync</code>：篩選候選、加總排序、判斷可否預選，並決定付款篩選用的物流類型。</li>
+</ul>
+</details>
+</section>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 06．預選與 canDefaultSelectedCheapest -->
+
+<div class="cps-paper" data-article-revision="checkout-preselect-20261012-v1">
+<section class="cps-preselect-part">
+<div class="cps-hero"><div class="cps-eyebrow">系統先選好一項，消費者仍可更改</div><h2>預選與 <code>canDefaultSelectedCheapest</code></h2><p>預選就是消費者還沒自己選時，系統先選好一個選項。它會影響後續運費與可搭配的付款方式，不只是畫面停在哪一項。</p></div>
+<h3 id="三個概念，分開看">三個概念，分開看</h3>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>概念</th>
+<th>意思</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>可否預選：<code>CanDefaultSelected</code></td>
+<td>true 表示允許系統預先選它，但不保證選中；false 限制自動挑選策略，不等於物流不能使用。</td>
+</tr>
+<tr>
+<td>推薦標記：<code>IsRecommend</code></td>
+<td>標示本輪計算推薦的配送群組，不等於已經選中。</td>
+</tr>
+<tr>
+<td>已選結果：<code>SelectedCheckoutShippingTypeGroup</code></td>
+<td>購物車目前選中的物流，可能來自消費者，也可能來自前一輪系統預選。</td>
+</tr>
+</tbody></table></div>
+
+<p>預選結果在畫面上通常會呈現勾選狀態，消費者仍可更改。實際畫面呈現由前端負責。</p>
+
+</section>
+<section class="cps-preselect-part">
+<h3 id="例子：免費的門市自取，為什麼不直接選？">例子：免費的門市自取，為什麼不直接選？</h3>
+<p>假設尚未選物流，以下三種都可用：</p>
+
+<div class="cps-table cps-matrix"><table>
+<thead>
+<tr>
+<th>物流</th>
+<th>運費</th>
+<th>可否預選</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>門市自取</td>
+<td>0 元</td>
+<td>否</td>
+</tr>
+<tr>
+<td>超商取貨</td>
+<td>60 元</td>
+<td>是</td>
+</tr>
+<tr>
+<td>宅配</td>
+<td>100 元</td>
+<td>是</td>
+</tr>
+</tbody></table></div>
+
+<p>免費不代表消費者方便到門市。這個例子中，系統會把最低費用候選改成超商取貨，再用它篩選付款方式。</p>
+<p><strong>門市自取仍可保留在清單，供消費者自行選擇。</strong> 不可預選不是停用；能否完成結帳仍須符合其他條件。</p>
+
+</section>
+<section class="cps-preselect-part">
+<h3 id="這個布林值，記住的是「原本」的候選">這個布林值，記住的是「原本」的候選</h3>
+<p>在 <code>CalculateCheckoutShippingTypeAsync</code> 中，<code>canDefaultSelectedCheapest</code> 先記錄原本最低費用候選的 <code>CanDefaultSelected</code>。後來換候選時，這個值不會跟著重算。</p>
+
+<ol class="cps-flow" aria-label="原候選資格、替代候選與推薦標記的關係"><li><p><strong>原候選：門市自取 0 元</strong></p>
+<p>原候選不可預選，所以 <code>canDefaultSelectedCheapest = false</code>。</p>
+</li>
+<li><p><strong>換候選：超商取貨 60 元</strong></p>
+<p>改成可預選中最便宜的 <code>cheapestFeeShippingProfile</code>，但布林值仍為 false。</p>
+</li>
+<li><p><strong>推薦標記：不會自動變成 true</strong></p>
+<p><code>IsRecommend</code> 要求該布林值為 true，並符合候選的配送類型與地區。因此這次替代的超商取貨不會被標成推薦。</p>
+</li></ol>
+<p><strong>沒有推薦標記，不代表後續不能選中。</strong> 這個 Processor 先整理候選與推薦；後面的 <code>PickupShoppingCartCheckoutTypeProcessor</code> 再處理已選結果。</p>
+
+</section>
+<section class="cps-preselect-part">
+<details class="cps-detail"><summary>預選資格從哪裡來？</summary><p>上游 <code>CheckShoppingCartCheckoutTypeShippingDefaultSelectedProcessor.ExecuteAsync</code> 先把配送明細的 <code>CanDefaultSelected</code> 設成 true，再依規則調整：</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>物流</th>
+<th>調整規則</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>宅配 <code>Home</code></td>
+<td>配送地區的 <code>DefaultSelectedEnable</code> 為 false 時，改為不可預選。</td>
+</tr>
+<tr>
+<td>門市自取 <code>LocationPickup</code></td>
+<td>預設改成不可預選；商店符合 <code>LocationPickup:CanDefaultSelected.Enabled.ShopIds</code> 開關時，再改為可預選。</td>
+</tr>
+</tbody></table></div>
+<p>商店開關支援全開、單店與商店編號範圍；沒有設定或總開關關閉時，不開啟門市自取預選。</p>
+</details>
+<details class="cps-detail"><summary>為什麼不可預選不是整條流程的禁止令？</summary><p>後續 <code>PickupShoppingCartCheckoutTypeProcessor.PickupSelectedShippingType</code> 有不同挑選分支：</p>
+<ul>
+<li>已選物流仍在顯示清單中時，依配送類型與地區沿用對應群組。</li>
+<li>需要重新挑選且只有一種配送選項時，直接檢查是否有未超重明細，這個分支沒有檢查 <code>CanDefaultSelected</code>。</li>
+<li>多種選項時，先找帶 <code>IsRecommend</code> 且有未超重明細的群組。</li>
+<li>沒有推薦時，本地等分支才以 <code>CanDefaultSelected</code> 與未超重條件挑選；海外分支則依已選配送地區的明細挑選。</li>
+</ul>
+<p>因此可否預選是自動挑選策略的一部分，不能把 false 理解成禁止使用。也不能僅憑這個旗標，推定最後一定選中或一定不選中。</p>
+</details>
+<details class="cps-detail"><summary>原始碼對照</summary><ul>
+<li><code>CheckShoppingCartCheckoutTypeShippingDefaultSelectedProcessor.ExecuteAsync</code>：設定各物流的預選資格。</li>
+<li><code>CalculateShoppingCartCheckoutPayShippingProcessor.CalculateCheckoutShippingTypeAsync</code>：記錄原候選資格、必要時替換候選，再設定 <code>IsRecommend</code>。</li>
+<li><code>PickupShoppingCartCheckoutTypeProcessor.PickupSelectedShippingType</code>：維護 <code>SelectedCheckoutShippingTypeGroup</code>。</li>
+</ul>
+</details>
+</section>
+</div>
+
+<!-- endtab -->
+
+<!-- tab 07．DisplayShippingTypeList -->
+
+<div class="cps-paper" data-article-revision="checkout-display-shipping-20261012-v1">
+<section class="cps-shipping-part">
+<div class="cps-hero"><div class="cps-eyebrow">把配送明細，整理成可選的收貨方式</div><h2><code>DisplayShippingTypeList</code></h2><p>這份清單回答「目前有哪些配送方式可選」，例如宅配、超商取貨、門市自取。每個選項包含配送明細、地區、名稱，以及可否預選與推薦標記。</p></div>
+<h3 id="從哪裡來？">從哪裡來？</h3>
+<p>新建購物車時，<code>CheckoutType.DisplayShippingTypeList</code> 預設為 <code>null</code>。上游先準備 <code>CheckoutType.DeliveryTypeList</code>，包含可用配送明細與已算好的運費，本 Processor 再首次組裝顯示清單。</p>
+<p>快取載入或促銷後重算時，可能已有舊清單。本次會重新組裝並覆寫，不是每次都從 <code>null</code> 開始。</p>
+
+</section>
+<section class="cps-shipping-part">
+<h3 id="五個步驟，最後整份賦值一次">五個步驟，最後整份賦值一次</h3>
+<p>主要組裝位置是 <code>CalculateCheckoutShippingTypeAsync</code>：</p>
+
+<ol class="cps-flow" aria-label="配送顯示清單的組裝與賦值流程"><li><p><strong>挑可用物流</strong></p>
+<p>透過金物流 Mapping，留下能搭配目前付款方式的配送明細。</p>
+</li>
+<li><p><strong>整理成配送群組</strong></p>
+<p>依配送類型、地區與 <code>Sort</code> 分組，把各溫層明細放入群組的 <code>DeliveryTypeList</code>。</p>
+</li>
+<li><p><strong>補上資格與推薦</strong></p>
+<p>帶入 <code>CanDefaultSelected</code>，依最低費用候選及原候選資格設定 <code>IsRecommend</code>；特殊零元訂單情境另排除不適用的後付款配送。</p>
+</li>
+<li><p><strong>還原明細選取狀態</strong></p>
+<p>舊清單非空時，依明細 ID 還原 <code>IsSelected</code>；若某溫層完全漏選，補選該溫層明細。</p>
+</li>
+<li><p><strong>補名稱，寫回清單</strong></p>
+<p><code>AssignShippingTypeNameAsync</code> 補上名稱與地區名稱，再執行 <code>DisplayShippingTypeList = shippingTypeGroup</code>。</p>
+</li></ol>
+<p><strong>正常完成方法時，配送顯示清單整份賦值一次。</strong> 這裡與 <code>DisplayPayTypeList</code> 的兩次賦值不同。提前返回時，不會走到本次清單寫回。</p>
+
+</section>
+<section class="cps-shipping-part">
+<h3 id="例子：宅配-100-元，超商取貨-60-元">例子：宅配 100 元，超商取貨 60 元</h3>
+<p>假設只有常溫商品，兩種物流都能搭配目前付款、都允許預選，且沒有其他限制。上游提供宅配／本島／常溫 100 元，以及超商取貨／常溫 60 元，整理後得到：</p>
+
+<div class="cps-table cps-matrix"><table>
+<thead>
+<tr>
+<th>顯示選項</th>
+<th>包含的明細</th>
+<th>推薦</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>宅配</td>
+<td>本島常溫、100 元</td>
+<td>否</td>
+</tr>
+<tr>
+<td>超商取貨</td>
+<td>常溫、60 元</td>
+<td>是</td>
+</tr>
+</tbody></table></div>
+
+<p><strong>兩個選項都保留。</strong> 最低費用主要影響推薦與尚未選物流時的付款篩選基礎，不會只留下超商取貨。</p>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>原本狀態</th>
+<th>後續 Pickup 在此例的處理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>還沒有選物流</td>
+<td>預選有推薦標記的超商取貨。</td>
+</tr>
+<tr>
+<td>原本已選宅配</td>
+<td>確認宅配仍在清單中後沿用，不因超商更便宜就強制切換。</td>
+</tr>
+</tbody></table></div>
+
+</section>
+<section class="cps-shipping-part">
+<h3 id="可選清單，與目前選中的是兩件事">可選清單，與目前選中的是兩件事</h3>
+<div class="cps-table"><table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>回答的問題</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DisplayShippingTypeList</code></td>
+<td>目前有哪些配送方式可選？</td>
+</tr>
+<tr>
+<td><code>SelectedCheckoutShippingTypeGroup</code></td>
+<td>這台購物車目前選哪一種？</td>
+</tr>
+</tbody></table></div>
+<p>本 Processor 主要建立顯示清單，也整理物流明細的 <code>IsSelected</code>。後面的 <code>PickupShoppingCartCheckoutTypeProcessor</code> 再維護已選物流群組；後續調整明細選取與運費券結果，外層保存快取，下次重算時再載入更新。</p>
+
+<details class="cps-detail"><summary>保留選取狀態與特殊情境的細節</summary><ul>
+<li>還原使用舊清單中 <code>IsSelected</code> 明細的 ID。只對本次仍存在的明細還原；若某溫層完全沒選中，先取該溫層第一筆 <code>IsCheapestFee</code> 明細，沒有則取第一筆。這段補選在舊清單非空的分支內執行。</li>
+<li>只有贈品券商品且運費為 0，或 OSM 0 元代客單等分支，會排除 <code>CashOnDelivery</code>、<code>Family</code>、<code>SevenEleven</code>、<code>HiLife</code>、<code>OKmart</code> 這些後付款配送類型，不等於排除所有超商取貨。</li>
+<li>特定建立／重算購物車且已有物流、含贈品券的情境，<code>CheckPickupShoppingCartCheckoutType</code> 若發現溫層選取不完整，會先清空舊顯示清單並重設明細選取。</li>
+<li>配送明細為空且已選海外地區時，方法提前返回，不執行本次清單重建。</li>
+<li>上游 <code>CalculateShoppingCartShippingPriceLimitProcessor</code> 也有將此欄位設回 <code>null</code> 的分支，因此「首次組裝點」不代表其他流程永遠不會清除它。</li>
+</ul>
+</details>
+<details class="cps-detail"><summary>原始碼對照</summary><ul>
+<li><code>CheckoutTypeEntity.DisplayShippingTypeList</code> 與 <code>CartEntity</code> 建構子：欄位宣告與初始狀態。</li>
+<li><code>CalculateShoppingCartCheckoutPayShippingProcessor.CalculateCheckoutShippingTypeAsync</code>：篩選、分組、選取還原與整份賦值。</li>
+<li><code>AssignShippingTypeNameAsync</code>：寫入 <code>Name</code> 與 <code>RegionName</code>。</li>
+<li><code>PickupShoppingCartCheckoutTypeProcessor.PickupSelectedShippingType</code>：維護已選配送群組。</li>
+</ul>
+</details>
+</section>
+</div>
+
+<!-- endtab -->
+
+{% endtabs %}
