@@ -1,5 +1,5 @@
 ---
-title: 定期購通知 Queue 設計：從雙層佇列到防重與併發控制
+title: 定期購通知 Queue 設計
 date: 2026-10-08 11:42:00
 categories: Regular-Order
 top_img: https://pub-d7e550ef212547d888a6e01348459946.r2.dev/style/regular-purchase.png
