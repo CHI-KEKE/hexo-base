@@ -189,6 +189,22 @@ tags:
 .rpa-rec-follow{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:15px 18px;margin:15px 0;color:#4a5568;font-size:13px;line-height:1.75}
 .rpa-rec-follow strong{color:#7048e8}
 @media(max-width:760px){.rpa-rec-payload{padding:12px 14px}.rpa-rec-payload-row,.rpa-rec-result{grid-template-columns:1fr;gap:3px}.rpa-rec-result{padding:11px 13px}}
+.rpa-tail-compare{display:grid;gap:11px;margin:16px 0 8px}
+.rpa-tail-compare-row{display:grid;grid-template-columns:175px minmax(0,1fr);gap:16px;background:#fff;border:1px solid #e2e8f0;border-left:4px solid var(--compare-color);border-radius:10px;padding:14px 17px;min-width:0}
+.rpa-tail-compare-name{color:var(--compare-ink);font-size:13px;font-weight:800;line-height:1.6}
+.rpa-tail-compare-name strong{display:block;color:#1a1a2e;font-size:16px}
+.rpa-tail-compare-detail{min-width:0;color:#4a5568;font-size:13px;line-height:1.7}
+.rpa-tail-compare-detail span{display:block}
+.rpa-tail-compare-detail b{color:#1a1a2e}
+.rpa-tail-chain{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px;margin:17px 0 8px}
+.rpa-tail-chain-step{display:grid;grid-template-columns:170px 22px minmax(0,1fr);gap:10px;align-items:center;border-bottom:1px dashed #e2e8f0;padding:9px 0;color:#4a5568;font-size:13px;line-height:1.65;min-width:0}
+.rpa-tail-chain-step:last-child{border-bottom:0}
+.rpa-tail-chain-step b{color:#1a1a2e}
+.rpa-tail-chain-step i{font-style:normal;text-align:center;color:#94a3b8;font-size:18px}
+.rpa-tail-trace-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:16px 0 8px}
+.rpa-tail-trace-field{background:#fff;border:1px solid #e2e8f0;border-top:4px solid var(--field-color);border-radius:9px;padding:12px 15px;min-width:0;color:#4a5568;font-size:13px;line-height:1.65}
+.rpa-tail-trace-field b{display:block;color:var(--field-ink);font-size:14px;margin-bottom:5px}
+@media(max-width:760px){.rpa-tail-compare-row,.rpa-tail-chain-step{grid-template-columns:1fr;gap:4px}.rpa-tail-chain-step i{transform:rotate(90deg);line-height:1}.rpa-tail-trace-fields{grid-template-columns:1fr}}
 </style>
 
 <div class="rpa">
@@ -600,415 +616,104 @@ tags:
 
 
 <!-- tab 貨到付款定期購怎麼建單 -->
-
-
-
-貨到付款的流程完全不同。
-
-原本定期購設定為貨到付款
-    ↓
-沒有信用卡 Token
-    ↓
-判斷為 CashOnDeliveryProcess
-    ↓
-不呼叫 Razer
-    ↓
-不執行線上扣款
-    ↓
-直接建立訂單
-    ↓
-訂單狀態為 WaitingToPay
-    ↓
-消費者收到商品時再付款
-
-貨到付款不會真的打 Razer 支付服務。
-
-它可能只準備一些基本資訊，例如：
-
-customer_name
-
-但不會帶：
-
-card_token
-
-也不會進行：
-
-server-to-server card charge
-
-因此貨到付款的  WaitingToPay  是：
-
-訂單已經建立，但消費者要等收到貨後，再用現金或指定方式付款。
-
-這和信用卡的  WaitingToPay  名稱相同，但意思完全不同：
-
-┌──────────┬──────────────────────────────────┐
-│ 情境     │ WaitingToPay 的真正意思          │
-├──────────┼──────────────────────────────────┤
-│ 信用卡   │ 已送支付商，等待支付結果         │
-├──────────┼──────────────────────────────────┤
-│ 貨到付款 │ 沒有線上支付，等待消費者收貨付款 │
-└──────────┴──────────────────────────────────┘
-
+<div class="rpa">
+<div class="rpa-hero">
+<div class="rpa-eyebrow">CASH ON DELIVERY</div>
+<h1>貨到付款的這一期，mweb 會怎麼建單？</h1>
+<p>排程仍會建立本期交易訂單，但付款不在建單當下向信用卡通道請款。這條路徑的重點是建立訂單、排入轉單工作，以及把結果回報給定期購 Worker。</p>
+</div>
+<div class="rpa-section-head"><div class="rpa-section-chip">01</div><div class="rpa-section-title">貨到付款的建單順序</div></div>
+<div class="rpa-rail-shell" role="group" aria-label="貨到付款定期購建單流程">
+<div class="rpa-rail-io">本期虛擬購物車選擇 <code>CashOnDelivery</code></div>
+<div class="rpa-rail">
+<div class="rpa-rail-stop" style="--rail-color:#4dabf7"><div class="rpa-rail-dot">1</div><div class="rpa-rail-title">選出貨到付款 Pipeline</div><div class="rpa-rail-desc"><code>GetPayProcessDataProcessor</code> 將 <code>PayProcessFlowType</code> 設為 <code>CashOnDeliveryProcess</code>，<code>CreateTradesOrder()</code> 依此執行已註冊的 Processor。</div></div>
+<div class="rpa-rail-stop" style="--rail-color:#bd93f9"><div class="rpa-rail-dot">2</div><div class="rpa-rail-title">整理資料並建立交易訂單</div><div class="rpa-rail-desc">Pipeline 先整理、驗證、計算與映射訂單資料，再由 <code>CreateTradesOrderProcessor</code> 寫入本期交易訂單。訂單流程狀態起始預設為 <code>WaitingToTrans</code>。</div></div>
+<div class="rpa-rail-stop" style="--rail-color:#20c997"><div class="rpa-rail-dot">3</div><div class="rpa-rail-title">排入 ERP 轉單工作</div><div class="rpa-rail-desc"><code>TransferOrderProcessor</code> 建立轉單 Task。依設定排入 <code>TransferOrderToERP</code> 或 <code>TransToERPTmp</code>；這一步表示工作已排入，不表示 ERP 已完成轉單。</div></div>
+<div class="rpa-rail-stop" style="--rail-color:#20c997"><div class="rpa-rail-dot">4</div><div class="rpa-rail-title">結束本期建單流程</div><div class="rpa-rail-desc"><code>CreateRegularOrderProcessor</code> 看到內部來源會直接返回，不會再次建立訂閱主設定。Pipeline 接著執行後續訂單處理，API 回傳本期訂單識別資訊。</div></div>
+</div>
+<div class="rpa-rail-io output">本期建立的是新的交易訂單，沿用既有的定期購設定</div>
+</div>
+<div class="rpa-caption">圖中保留與貨到付款有關的主要節點，省略優惠、贈品、點數與發票等共同處理。實際執行若遇錯誤，後續 Processor 可能不會執行。</div>
+<div class="rpa-section-head"><div class="rpa-section-chip">02</div><div class="rpa-section-title">訂單狀態與付款時點</div></div>
+<div class="rpa-tail-chain" role="group" aria-label="貨到付款建單與收款時點">
+<div class="rpa-tail-chain-step"><b>mweb 建單時</b><i>→</i><span>建立交易訂單，流程狀態預設 <code>WaitingToTrans</code>。</span></div>
+<div class="rpa-tail-chain-step"><b>轉單處理時</b><i>→</i><span>由背景 Task 接手 ERP 轉單。<code>TransferOrderProcessor</code> 本身只負責排入工作。</span></div>
+<div class="rpa-tail-chain-step"><b>交付收款時</b><i>→</i><span>貨到付款的收款發生在後續交付流程，不是本次 mweb API 的線上信用卡授權。</span></div>
+</div>
+<div class="rpa-inline-note"><strong>付款邊界：</strong><code>CashOnDeliveryProcess</code> 的註冊清單沒有 <code>AuthProcessor</code> 或 <code>ThirdPartyPayApiProcessor</code>。因此這次建單不會向 Razer 送 <code>card_token</code>，也沒有線上信用卡扣款步驟。</div>
+<div class="rpa-inline-note"><strong>狀態判讀：</strong>原稿把貨到付款建單後固定寫成 <code>WaitingToPay</code>，與 <code>CreateTradesOrderProcessor</code> 的預設 <code>WaitingToTrans</code> 不符。若後續系統顯示待付款，應另看該階段的狀態欄位與更新來源。</div>
+<div class="rpa-inline-note"><strong>核對程式：</strong><code>GetPayProcessDataProcessor.cs</code>、<code>PayProcessProcessorModule.cs</code>、<code>CreateTradesOrderProcessor.cs</code>、<code>TransferOrderProcessor.cs</code>、<code>CreateRegularOrderProcessor.cs</code>。</div>
+</div>
 
 <!-- endtab -->
 
 
 <!-- tab 建單差異 -->
-
-訂單初始狀態不同
-
-對 Stripe / Razer 這類第三方支付， CreateTradesOrderProcessor  會根據：
-
-context.IsRegularOrderAutoGen
-
-決定訂單初始狀態。
-
-程式邏輯概念是：
-
-if (context.IsRegularOrderAutoGen == false)
-{
-    orderSlaveFlow.Status = WaitingToPay;
-}
-
-因此：
-
-┌────────────────────────────────┬──────────────────────────────────────────────────────────────────────────┐
-│ 情境                           │ 初始訂單狀態                                                             │
-├────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
-│ 一般 Stripe / Razer 付款       │ WaitingToPay                                                             │
-├────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
-│ 定期購 Stripe / Razer 自動建單 │ 不設定成一般的 WaitingToPay，走定期購自動建單狀態，通常是 WaitingToTrans │
-
-
-維持：
-
-RegularOrder
-    ↕
-TradesOrderGroup / TradesOrderSlave
-
+<div class="rpa">
+<div class="rpa-hero">
+<div class="rpa-eyebrow">ORDER STATE COMPARISON</div>
+<h1>同樣是本期建單，哪些地方真的不同？</h1>
+<p>付款方式先決定執行哪條 Pipeline；建立交易訂單時的初始狀態也各有規則。之後的授權或第三方付款結果可能再次更新訂單狀態，因此需要分清「剛寫入訂單」與「API 回傳時」。</p>
+</div>
+<div class="rpa-section-head"><div class="rpa-section-chip">01</div><div class="rpa-section-title">建立訂單當下的差異</div></div>
+<div class="rpa-tail-compare" role="group" aria-label="四種付款方式的建單狀態與付款節點">
+<div class="rpa-tail-compare-row" style="--compare-color:#4dabf7;--compare-ink:#1971c2"><div class="rpa-tail-compare-name">台灣一般信用卡<strong><code>CreditCardOnce</code></strong></div><div class="rpa-tail-compare-detail"><span><b>Pipeline：</b><code>CreditCardProcess</code></span><span><b>初始流程狀態：</b><code>WaitingToAuth</code></span><span><b>付款節點：</b><code>AuthProcessor</code> 依信用卡 Gateway 進行授權。</span></div></div>
+<div class="rpa-tail-compare-row" style="--compare-color:#bd93f9;--compare-ink:#7048e8"><div class="rpa-tail-compare-name">Stripe 信用卡<strong><code>CreditCardOnce_Stripe</code></strong></div><div class="rpa-tail-compare-detail"><span><b>Pipeline：</b><code>ThirdPartyProcess</code></span><span><b>初始流程狀態：</b>沿用 <code>WaitingToTrans</code> 預設值。</span><span><b>付款節點：</b><code>ThirdPartyPayApiProcessor</code>；付款服務可依結果更新狀態。</span></div></div>
+<div class="rpa-tail-compare-row" style="--compare-color:#bd93f9;--compare-ink:#7048e8"><div class="rpa-tail-compare-name">Razer 信用卡<strong><code>CreditCardOnce_Razer</code></strong></div><div class="rpa-tail-compare-detail"><span><b>Pipeline：</b><code>ThirdPartyProcess</code></span><span><b>初始流程狀態：</b>定期購自動建單沿用 <code>WaitingToTrans</code>；一般結帳改設 <code>WaitingToPay</code>。</span><span><b>付款節點：</b><code>ThirdPartyPayApiProcessor</code>；付款服務可依結果更新狀態。</span></div></div>
+<div class="rpa-tail-compare-row" style="--compare-color:#20c997;--compare-ink:#0f9177"><div class="rpa-tail-compare-name">貨到付款<strong><code>CashOnDelivery</code></strong></div><div class="rpa-tail-compare-detail"><span><b>Pipeline：</b><code>CashOnDeliveryProcess</code></span><span><b>初始流程狀態：</b>沿用 <code>WaitingToTrans</code> 預設值。</span><span><b>後續節點：</b><code>TransferOrderProcessor</code> 排入轉單 Task，沒有線上授權 Processor。</span></div></div>
+</div>
+<div class="rpa-caption">「初始流程狀態」指 <code>CreateTradesOrderProcessor</code> 建立 <code>OrderSlaveFlow</code> 時的 <code>StatusDef</code>。它不是整個付款流程的最終狀態，也不等於消費者畫面顯示的狀態。</div>
+<div class="rpa-section-head"><div class="rpa-section-chip">02</div><div class="rpa-section-title">建單後，哪一層會再改變狀態？</div></div>
+<div class="rpa-tail-chain" role="group" aria-label="建單與付款各階段的狀態來源">
+<div class="rpa-tail-chain-step"><b>建立訂單</b><i>→</i><span><code>CreateTradesOrderProcessor</code> 先寫入 <code>OrderSlaveFlow.StatusDef</code>。</span></div>
+<div class="rpa-tail-chain-step"><b>執行付款</b><i>→</i><span>信用卡授權或第三方付款處理結果可更新流程狀態；第三方回報 <code>Pending</code> 時會寫入 <code>WaitingToPay</code>。</span></div>
+<div class="rpa-tail-chain-step"><b>API 回傳</b><i>→</i><span><code>SubscriptionOrderAutoGen</code> 從訂單流程查出 <code>OrderSlaveFlowStatus</code>，與交易訂單識別資訊一起回傳。</span></div>
+<div class="rpa-tail-chain-step"><b>Worker 記錄本期</b><i>→</i><span><code>RegularCreateOrderJob</code> 只在 API 成功且回傳 <code>WaitingToPay</code> 時，把本期明細分類為 Pending。</span></div>
+</div>
+<div class="rpa-inline-note"><strong>同名狀態的邊界：</strong><code>OrderSlaveFlow.StatusDef</code>、面向會員的 <code>StatusForUserDef</code>，以及 Worker 的本期明細狀態是不同資料。只看到 <code>WaitingToPay</code> 這個字，不能直接推定它來自哪個欄位或表示哪個付款階段。</div>
+<div class="rpa-inline-note"><strong>核對程式：</strong>mweb 的 <code>GetPayProcessDataProcessor.cs</code>、<code>CreateTradesOrderProcessor.cs</code>、<code>TradesOrderPaymentService.cs</code>、<code>TradesOrderService.cs</code>；Worker 的 <code>RegularCreateOrderJob.cs</code>。</div>
+</div>
 
 <!-- endtab -->
 
 <!-- tab RegularOrderTracing -->
-
-主要目的，是要記錄：
-
-某一次定期購「第幾期自動建單」執行到哪裡，以及最後建立了哪一筆交易訂單。
-
-
-
-為什麼不能只靠  RegularOrderId ？
-
-因為同一個定期購主單會有很多期訂單：
-
-RegularOrderId = 1001
-    ├─ 2026/10/15 建立第 1 期
-    ├─ 2026/11/15 建立第 2 期
-    ├─ 2026/12/15 建立第 3 期
-    └─ ...
-
-所以不能只用：
-
-RegularOrderId = 1001
-
-判斷這一次自動建單是否已經執行過。
-
-系統需要一個代表「這一次建單任務」的識別碼：
-
-TraceId
-
-概念上：
-
-RegularOrderId
-    = 哪一個長期訂閱
-
-TraceId
-    = 這一期自動建單任務
-
-────────────────────
-
-二、它首先解決「重複請求」問題
-
-在  SubscriptionOrderAutoGen()  一進來時，會先做：
-
-this.BlockDuplicateRequest(
-    nameof(SubscriptionOrderAutoGen),
-    subscriptionOrderAutoGenInfo.TraceId);
-
-這主要防止短時間內同一個  TraceId  重複進入。
-
-接著查詢：
-
-var tracing =
-    this.RegularOrderService
-        .GetRegularOrderTracing(
-            subscriptionOrderAutoGenInfo.TraceId);
-
-如果查不到，代表這是第一次執行：
-
-TraceId 查無資料
-    ↓
-建立一筆 RegularOrderTracing
-    ↓
-Status = New
-    ↓
-繼續自動建單
-
-────────────────────
-
-三、它解決「重複建單」問題
-
-如果同一個  TraceId  的建單已經成功：
-
-StatusDef = "Success"
-
-API 就不會再重新組購物車、付款、建立訂單，而是直接回傳之前記錄的訂單資訊：
-
-else if (tracing.StatusDef == "Success")
-{
-    return ...
-}
-
-流程是：
-
-同一個 TraceId 再次進來
-    ↓
-查到 RegularOrderTracing
-    ↓
-Status = Success
-    ↓
-直接回傳原本的 TradesOrderGroup / TradesOrderSlave
-    ↓
-不重複建單
-
-這就是它最重要的用途。
-
-如果沒有這張表，API 可能遇到：
-
-第一次請求其實已經建立訂單
-但呼叫端沒有收到成功回應
-    ↓
-呼叫端重試
-    ↓
-mweb 不知道之前是否成功
-    ↓
-再次建立一個新的 TradesOrderGroup
-
-結果可能變成：
-
-同一期定期購
-    ├─ TG001
-    └─ TG002
-
-也就是重複建單。
-
-────────────────────
-
-四、它記錄自動建單的狀態
-
-目前主要狀態有：
-
-┌───────────┬────────────────────────┐
-│ StatusDef │ 意義                   │
-├───────────┼────────────────────────┤
-│ New       │ 已開始處理，但尚未完成 │
-├───────────┼────────────────────────┤
-│ Success   │ 已成功建立訂單         │
-├───────────┼────────────────────────┤
-│ Fail      │ 建單過程發生錯誤       │
-└───────────┴────────────────────────┘
-
-完整狀態流轉：
-
-[尚未執行]
-    │
-    │ 第一次收到 TraceId
-    ▼
-[New]
-    │
-    ├─ 建單成功
-    │      ▼
-    │  [Success]
-    │
-    └─ 建單發生例外
-           ▼
-         [Fail]
-
-API 的寫入時機：
-
-開始建單
-    ↓
-New
-
-CreateTradesOrder() 成功返回
-    ↓
-Success
-
-發生例外
-    ↓
-Fail
-
-────────────────────
-
-五、它把 TraceId 對應到真正的交易訂單
-
-成功後，系統會把以下資料寫回  RegularOrderTracing ：
-
-TradesOrderGroupId
-TradesOrderGroupCode
-TradesOrderSlaveId
-TradesOrderSlaveCode
-
-也就是建立這張關係：
-
-TraceId
-    ↓
-這一次自動建單任務
-    ↓
-TradesOrderGroup
-    ↓
-TradesOrderSlave
-
-例如：
-
-TraceId = trace-abc
-    ├─ Status = Success
-    ├─ TGId = 50001
-    ├─ TGCode = TG202610150001
-    ├─ TSId = 80001
-    └─ TSCode = TS202610150001
-
-下一次同一個  TraceId  再進來時，就能直接知道：
-
-之前建立的是哪一筆交易訂單。
-
-────────────────────
-
-六、它讓 API 可以回傳之前的成功結果
-
- GetAutoGenResponseEntity()  有處理：
-
-tracing.StatusDef == "Success"
-
-如果已經成功，API 可以利用 tracing 裡保存的：
-
-TradesOrderGroupCode
-TradesOrderSlaveCode
-
-組出成功回應。
-
-這解決一個常見問題：
-
-訂單其實已經建立
-但原本 API Response 遺失、逾時或呼叫端沒收到
-
-呼叫端重新送同一個  TraceId  時：
-
-不用再建一次訂單
-直接查 tracing 並回傳之前的訂單結果
-
-所以它不只防止重複建單，也提供：
-
-「已建立結果可重新查回」的能力。
-
-────────────────────
-
-七、它和正式訂單資料的分工不同
-
- RegularOrder 
-
-代表長期訂閱本身：
-
-這個會員訂閱什麼商品？
-多久配送一次？
-最多配送幾次？
-目前定期購 Provider 是誰？
-使用什麼 CheckoutInfo？
-
- TradesOrderGroup 
-
-代表某一次實際交易：
-
-這一期真正建立的訂單
-有哪些商品？
-金額多少？
-配送到哪裡？
-付款結果如何？
-
- RegularOrderTracing 
-
-代表某一次自動建單執行紀錄：
-
-這次排程有沒有執行？
-目前成功還是失敗？
-建立出的 TG / TS 是哪一筆？
-
-三者關係：
-
-RegularOrder
-    = 長期訂閱主檔
-
-RegularOrderTracing
-    = 每一期自動建單的執行追蹤
-
-TradesOrderGroup
-    = 實際產生的交易訂單
-
-────────────────────
-
-八、為什麼  RegularOrderTracing  還要存預計出貨日？
-
-表中有：
-
-RegularOrderTracing_ExpectShippingDate
-
-因為同一個  RegularOrderId  可能會有很多期。
-
-透過：
-
-RegularOrderId
-    +
-ExpectShippingDate
-    +
-TraceId
-
-可以知道：
-
-這是哪一筆定期購
-這次預計哪一天出貨
-這次自動建單的唯一識別碼是什麼
-
-因此它也方便：
-
-• 查詢哪一期失敗
-• 重跑某一期
-• 對照排程日期
-• 調查重複建單
-• 對照正式交易訂單
-
-┌────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ 情境               │ 會建立 / 更新的資料                                                                                    │
-├────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 首次前台定期購建單 │ 建立 TradesOrderGroup、TradesOrder、TradesOrderSlave，以及 RegularOrder；不建立 RegularOrderTracing    │
-├────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ 定期購自動建單     │ 建立新的 TradesOrderGroup、TradesOrder、TradesOrderSlave，並建立 / 更新                                │
-│                    │ RegularOrderTracing；不重新建立 RegularOrder                                                           │
-└────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-
-第一次前台購買
-    ├─ 建立 RegularOrder
-    └─ 建立第 1 筆 TradesOrderGroup
-
-第一期自動建單
-    ├─ 讀取既有 RegularOrder
-    ├─ 建立第 1 筆 RegularOrderTracing
-    └─ 建立第 2 筆 TradesOrderGroup
-
-第二期自動建單
-    ├─ 讀取既有 RegularOrder
-    ├─ 建立第 2 筆 RegularOrderTracing
-    └─ 建立第 3 筆 TradesOrderGroup
+<div class="rpa">
+<div class="rpa-hero">
+<div class="rpa-eyebrow">REGULAR ORDER TRACING</div>
+<h1>同一期請求重送，mweb 怎麼找回已建的訂單？</h1>
+<p><code>RegularOrderTracing</code> 用呼叫端提供的 <code>TraceId</code> 記錄一次自動建單嘗試。它保存處理狀態與建立出的交易訂單識別資訊，讓已成功的同一請求可以直接回傳原結果。</p>
+</div>
+<div class="rpa-section-head"><div class="rpa-section-chip">01</div><div class="rpa-section-title">同一個 TraceId 再進來時</div></div>
+<div class="rpa-rec-gate"><code>SubscriptionOrderAutoGen</code> 收到 <code>TraceId</code><small>先執行 <code>BlockDuplicateRequest</code>，再查詢 <code>RegularOrderTracing</code></small></div>
+<div class="rpa-rec-results" role="group" aria-label="依 Tracing 查詢結果分流">
+<div class="rpa-rec-result" style="--result-color:#4dabf7;--result-ink:#1971c2"><div class="rpa-rec-result-label">查無紀錄</div><div class="rpa-rec-result-body">插入 <code>StatusDef = New</code>，記下 <code>RegularOrderId</code>、<code>TraceId</code>、執行日期與預計出貨日，再組購物車、付款 Context 並建單。</div></div>
+<div class="rpa-rec-result" style="--result-color:#20c997;--result-ink:#0f9177"><div class="rpa-rec-result-label">已有 <code>Success</code></div><div class="rpa-rec-result-body">跳過重新建單。用 Tracing 保存的 TG／TS 識別資訊組成功回應，並查詢目前的 <code>OrderSlaveFlowStatus</code>。</div></div>
+<div class="rpa-rec-result" style="--result-color:#ff922b;--result-ink:#d9480f"><div class="rpa-rec-result-label">已有其他狀態</div><div class="rpa-rec-result-body">Controller 沒有在這裡直接回傳；它繼續執行本次建單流程。因此 <code>New</code> 或 <code>Fail</code> 不能視為「已被永久擋下」。</div></div>
+</div>
+<div class="rpa-caption">短時間重複請求由 <code>BlockDuplicateRequest</code> 處理；持久的結果重用只見於 Tracing 已是 <code>Success</code> 的分支。兩者作用時點不同。</div>
+<div class="rpa-section-head"><div class="rpa-section-chip">02</div><div class="rpa-section-title">Tracing 什麼時候更新？</div></div>
+<div class="rpa-tail-chain" role="group" aria-label="RegularOrderTracing 狀態更新順序">
+<div class="rpa-tail-chain-step"><b>第一次收到請求</b><i>→</i><span>插入 <code>New</code>；<code>ExecutedDate</code> 是當天，<code>ExpectShippingDate</code> 來自請求的 <code>NextExpectShippingDate</code>。</span></div>
+<div class="rpa-tail-chain-step"><b>建單方法返回</b><i>→</i><span><code>CreateTradesOrder()</code> 返回後，更新為 <code>Success</code>，並寫入建立出的 TG／TS 代碼與 ID。</span></div>
+<div class="rpa-tail-chain-step"><b>一般例外</b><i>→</i><span>若查得到這筆 Tracing，Controller 更新為 <code>Fail</code>，回傳失敗結果。</span></div>
+</div>
+<div class="rpa-inline-note"><strong>狀態邊界：</strong>Tracing 的 <code>Success</code> 代表這次 <code>CreateTradesOrder()</code> 已返回且訂單識別資訊已記錄，不等於第三方付款一定完成。本期交易訂單仍可能回報 <code>WaitingToPay</code>，由 Worker 另外分類為 Pending。</div>
+<div class="rpa-inline-note"><strong>例外分支：</strong><code>NoMoreElmahException</code> 的 catch 直接回傳錯誤，沒有在該分支更新 Tracing；原稿把所有例外都畫成 <code>Fail</code> 並不精確。</div>
+<div class="rpa-section-head"><div class="rpa-section-chip">03</div><div class="rpa-section-title">它保存哪些對照資料？</div></div>
+<div class="rpa-tail-trace-fields" role="group" aria-label="RegularOrderTracing 主要欄位">
+<div class="rpa-tail-trace-field" style="--field-color:#4dabf7;--field-ink:#1971c2"><b>這次請求</b><code>TraceId</code>、<code>RegularOrderId</code>。Worker 建立 API 請求時，以本期明細的 <code>RodTxid</code> 作為 <code>TraceId</code>。</div>
+<div class="rpa-tail-trace-field" style="--field-color:#bd93f9;--field-ink:#7048e8"><b>期別時間</b><code>ExecutedDate</code>、<code>ExpectShippingDate</code>，用來追查這次何時執行、預計何時出貨。</div>
+<div class="rpa-tail-trace-field" style="--field-color:#ff922b;--field-ink:#d9480f"><b>處理狀態</b><code>StatusDef</code> 記錄 <code>New</code>、<code>Success</code> 或 <code>Fail</code>。它描述自動建單嘗試，不是信用卡交易狀態。</div>
+<div class="rpa-tail-trace-field" style="--field-color:#20c997;--field-ink:#0f9177"><b>交易訂單</b><code>TradesOrderGroupId</code>／<code>Code</code>、<code>TradesOrderSlaveId</code>／<code>Code</code>，供成功重送時找回原訂單。</div>
+</div>
+<div class="rpa-tail-chain" role="group" aria-label="定期購設定、追蹤紀錄與交易訂單的分工">
+<div class="rpa-tail-chain-step"><b><code>RegularOrder</code></b><i>→</i><span>長期訂閱設定，保存商品、週期、收件與結帳資訊。</span></div>
+<div class="rpa-tail-chain-step"><b><code>RegularOrderTracing</code></b><i>→</i><span>本次自動建單的狀態與交易訂單對照。</span></div>
+<div class="rpa-tail-chain-step"><b><code>TradesOrderGroup</code>／<code>Slave</code></b><i>→</i><span>本期實際建立的交易訂單與明細。</span></div>
+</div>
+<div class="rpa-inline-note"><strong>重送的界限：</strong>如果交易訂單已寫入，但 Tracing 尚未更新為 <code>Success</code>，僅憑此處的 <code>Success</code> 回放分支無法證明「任何時點重送都絕不重複建單」。排查時仍需對照交易訂單與 Tracing。</div>
+<div class="rpa-inline-note"><strong>核對程式：</strong><code>TradesOrderV2Controller.SubscriptionOrderAutoGen()</code>、<code>RegularOrderService.cs</code>、<code>TradesOrderService.GetAutoGenResponseEntity()</code>、Worker 的 <code>RegularCreateOrderJob.cs</code>。</div>
+</div>
 
 <!-- endtab -->
 
